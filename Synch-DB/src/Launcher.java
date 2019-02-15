@@ -26,6 +26,7 @@ public class Launcher {
         System.out.println(account.getName().getDisplayName());
         System.out.println(account.getTeamMemberId());
         
+        // Test
         // try to find out what's in the root folder
         // DbxUserFilesRequests request = new DbxUserFilesRequests("/");
 	}
