@@ -17,7 +17,7 @@ public class Launcher {
 		System.out.println("Ein weiterer Test".length());
 		
 		// First try to import and use the Dropbox library properly.
-        DbxRequestConfig config = DbxRequestConfig.newBuilder("dropbox/java-tutorial").build();
+		DbxRequestConfig config = DbxRequestConfig.newBuilder("dropbox/java-tutorial").build();
         System.out.println(config.getClientIdentifier());
         DbxClientV2 client = new DbxClientV2(config, TOKEN);
         
