@@ -22,36 +22,35 @@ public class Launcher {
 		
 		// First try to import and use the Dropbox library properly.
 		DbxRequestConfig config = DbxRequestConfig.newBuilder("dropbox/java-tutorial").build();
-        System.out.println(config.getClientIdentifier());
-        DbxClientV2 client = new DbxClientV2(config, TOKEN);
+		System.out.println(config.getClientIdentifier());
+		DbxClientV2 client = new DbxClientV2(config, TOKEN);
         
-        // Get current account info
-        FullAccount account = client.users().getCurrentAccount();
-        // System.out.println(account.getName().getDisplayName());
-        // System.out.println(client.toString());
+		// Get current account info
+		FullAccount account = client.users().getCurrentAccount();
+		// System.out.println(account.getName().getDisplayName());
+		// System.out.println(client.toString());
         
-        // Test
-        // try to find out what's in the root folder
-        // DbxUserFilesRequests request = new DbxUserFilesRequests("/");
-        ListFolderResult result = client.files().listFolder("");
-        // System.out.println(result.toStringMultiline());
-        ListFolderResult resultUsers = client.files().listFolder("/user-info");
-        // System.out.println(resultUsers.toStringMultiline());
-        // client.files().createFolderV2("/user-info/test-folder");
-        DbxDownloader<FileMetadata> someUserInfo = client
-        	.files()
-        	.download("/user-info/user2.json");
-        InputStream in = someUserInfo.getInputStream();
-        try {
-        	String str = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-        	System.out.println(str);
-        } catch (IOException e) {
-        	System.out.println("Fehler beim Lesen des Inputstreams.");
-        } finally {
-        	someUserInfo.close();
-        }
+		// try to find out what's in the root folder
+		// DbxUserFilesRequests request = new DbxUserFilesRequests("/");
+		ListFolderResult result = client.files().listFolder("");
+		// System.out.println(result.toStringMultiline());
+		ListFolderResult resultUsers = client.files().listFolder("/user-info");
+		// System.out.println(resultUsers.toStringMultiline());
+		// client.files().createFolderV2("/user-info/test-folder");
+		DbxDownloader<FileMetadata> someUserInfo = client
+			.files()
+			.download("/user-info/user2.json");
+		InputStream in = someUserInfo.getInputStream();
+		try {
+			String str = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+			System.out.println(str);
+		} catch (IOException e) {
+			System.out.println("Fehler beim Lesen des Inputstreams.");
+		} finally {
+			someUserInfo.close();
+		}
         
-        // System.out.println(someUserInfo.getResult().toStringMultiline());
+		// System.out.println(someUserInfo.getResult().toStringMultiline());
 	}
 	
 }
