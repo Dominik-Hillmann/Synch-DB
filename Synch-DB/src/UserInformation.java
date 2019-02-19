@@ -14,13 +14,18 @@ public class UserInformation extends Information implements DataBaseStorable {
 	private String[] pics;
 	private String[] writings;
 	
-	public UserInformation(String path, DbxClientV2 client) throws DbxException, IOException {
+	/**
+	 * To have the extraction of information out of the JSON all wrapped up in the constructor.
+	 * @param fileName
+	 * @param client
+	 * @throws IOException
+	 * @throws DbxException 
+	 */	
+	public UserInformation(String fileName, DbxClientV2 client) throws IOException, DbxException {
 		Gson gson = new Gson();
+		String json = getJSONString("/user-info/" + fileName, client);	
 		
-		// To have the extraction of information out of the JSON all wrapped up in the constructor.
-		String json = getJSONString(path, client);
 		UserInformation userInfo = gson.fromJson(json, UserInformation.class);
-		
 		pw = userInfo.pw;
 		user = userInfo.user;
 		pics = userInfo.pics;
@@ -52,4 +57,6 @@ public class UserInformation extends Information implements DataBaseStorable {
 	}
 	
 	public boolean storeInDataBase() { return true; }
+	
+	private String encrypt(String inStr) { return "later"; }
 }

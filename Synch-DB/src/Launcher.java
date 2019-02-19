@@ -19,6 +19,7 @@ public class Launcher {
 	
 		// First try to import and use the Dropbox library properly.
 		DbxRequestConfig config = DbxRequestConfig.newBuilder("dropbox/java-tutorial").build();
+		// Groupings of parameters of how to contact the Dropbox API.
 		DbxClientV2 client = new DbxClientV2(config, TOKEN);
         
 		// FullAccount account = client.users().getCurrentAccount();
@@ -26,20 +27,25 @@ public class Launcher {
 		
 		// Weg 1
 		String userPath = "/user-info/user1.json";
+		String fileName = "user1.json";
 		InputStream in = client
 			.files()
 			.download(userPath)
 			.getInputStream();
 		String jsonStr= new String(in.readAllBytes(), StandardCharsets.UTF_8);
+		in.close();
 		Gson gson = new Gson();
 		UserInformation user1 = gson.fromJson(jsonStr, UserInformation.class);		
 		
 		// Weg 2
-		UserInformation user2 = new UserInformation(userPath, client);
+		UserInformation user2 = new UserInformation(fileName, client);
 		
 		// Vergleich						
 		user1.print();
 		user2.print();
+		
+		UserInformation user3 = new UserInformation("user5.json", client);
+		user3.print();
 	}
 	
 }
