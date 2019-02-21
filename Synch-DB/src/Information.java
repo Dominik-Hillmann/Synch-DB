@@ -29,4 +29,6 @@ public abstract class Information {
 		return new String(in.readAllBytes(), StandardCharsets.UTF_8);
 	}
 	
+	public abstract void print();
+	
 }

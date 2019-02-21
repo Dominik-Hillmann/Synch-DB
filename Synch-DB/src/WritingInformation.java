@@ -5,19 +5,15 @@ import com.dropbox.core.v2.DbxClientV2;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
-public class PictureInformation extends Information implements DataBaseStorable {
+public class WritingInformation extends Information implements DataBaseStorable {
 
 	private int day;
 	private int month;
 	private int year;
 	private String name;
-	private String filename;
 	private boolean secret;
 	private String[] tags;
-	
-	private String description;
-	private boolean instagram;
-	private boolean twitter;	
+	private String text;
 	
 	/**
 	 * 
@@ -26,14 +22,14 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	 * @throws IOException
 	 * @throws DbxException
 	 */
-	public PictureInformation(String filename, DbxClientV2 client) throws IOException, DbxException {
+	public WritingInformation(String filename, DbxClientV2 client) throws IOException, DbxException {
 		Gson gson = new Gson();
 		
-		String jsonStr = getJSONString("/pic-info/" + filename, client);
-		PictureInformation info;
+		String jsonStr = getJSONString("/writing-info/" + filename, client);
+		WritingInformation info;
 		
 		try {
-			info = gson.fromJson(jsonStr, PictureInformation.class);
+			info = gson.fromJson(jsonStr, WritingInformation.class);
 		} catch (JsonSyntaxException jse) {
 			throw new IOException("JSON string could not be converted.");
 		}
@@ -42,29 +38,21 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		this.month = info.month;
 		this.year = info.year;
 		this.name = info.name;
-		this.filename = info.filename;
 		this.secret = info.secret;
 		this.tags = info.tags;
-		this.description = info.description;
-		this.instagram = info.instagram;
-		this.twitter = info.twitter;
 		
 		
 	}
 	
 	public void print() {
 		System.out.println("Date: " + String.valueOf(day) + "." + String.valueOf(month) + "." + String.valueOf(year));
-		System.out.println("Names: " + name + ", " + filename);
+		System.out.println("Names: " + name);
 		for (String tag : tags) System.out.println(tag);
 		System.out.println("Number of tags: " + String.valueOf(tags.length));
-		System.out.println(description + "\n");
+		System.out.println(text + "\n");
 	}
-	
 	
 	// placeholder
-	public boolean storeInDataBase() { 
-		print(); // voerst
-		return true;	
-	}
+	public boolean storeInDataBase() { return true;	}
 	
 }

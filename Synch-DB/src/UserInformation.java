@@ -56,7 +56,10 @@ public class UserInformation extends Information implements DataBaseStorable {
 		System.out.println();
 	}
 	
-	public boolean storeInDataBase() { return true; }
+	public boolean storeInDataBase() {
+		print(); // vorerst
+		return true;
+	}
 	
 	private String encrypt(String inStr) { return "later"; }
 }
