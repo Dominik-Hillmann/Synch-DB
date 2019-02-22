@@ -1,6 +1,13 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,6 +72,9 @@ public class Launcher {
 			info.storeInDataBase();
 		}
 		
+		Logger.log("\n\n");
+		
+		
 		
 		var picFiles = new ArrayList<PictureInformation>();
 		var picFileNames = new ArrayList<String>();
@@ -81,42 +91,85 @@ public class Launcher {
 			try {
 				picFiles.add(new PictureInformation(name, client));
 			} catch (DbxException | IOException e) {
-				Logger.log("Could not download file named " + name);
+				Logger.log("Could not download file named " + name + ".");
 				e.printStackTrace();
 				continue;
 			} 
 		}
 		
+		Logger.log(picFiles.size());
 		for (PictureInformation info : picFiles) {
 			info.storeInDataBase();
 		}
 		
-		/*
-		var picFileNames = new ArrayList<String>();
-		PictureInformation[] picFiles;
+		Logger.log("\n\n");
+		
+		
+		
+		var writFiles = new ArrayList<WritingInformation>();
 		var writFileNames = new ArrayList<String>();
-		WritingInformation[] writFiles;
+		try {
+			client.files()
+				.listFolder(WRIT_DIR)
+				.getEntries()
+				.forEach(file -> writFileNames.add(file.getName()));					
+		} catch (DbxException e) {
+			Logger.log("Did not find directory " + WRIT_DIR + ".");
+		}
 		
-		String [] dirNames = { USER_DIR, PIC_DIR, WRIT_DIR };
-		
-		for (String dirName : dirNames) {
-			
-			// Get metadata about files in the directory.
-			List<Metadata> dirContent;
+		for (String name : writFileNames) {
 			try {
-				dirContent = client
-					.files()
-					.listFolder(dirName)
-					.getEntries();
-			} catch (DbxException dbxe) {
-				System.out.println("Could not download file from Dropbox.");
+				writFiles.add(new WritingInformation(name, client));
+			} catch (DbxException | IOException e) {
+				Logger.log("Could not download file named " + name + ".");
+				e.printStackTrace();
 				continue;
-			}
-			
-		}*/
-	
+			} 
+		}
+		
+		Logger.log(writFiles.size());
+		for (WritingInformation info : writFiles) {
+			info.storeInDataBase();
+		}
+		
 		
 		Logger.appendToLogFile();
+		
+		
+	    Path imgsPath = Paths.get("/home/dominik/DB-Synch-imgs/");
+	    Logger.log(imgsPath.toAbsolutePath().toString());
+		Logger.log(Files.isDirectory(imgsPath.toAbsolutePath()));
+		
+		if (!Files.isDirectory(imgsPath.toAbsolutePath())) {
+			(new File(imgsPath.toAbsolutePath().toString())).mkdirs();
+			Logger.log("created");
+		} else {
+			Logger.log("Dir already exists.");
+		}
+		
+		
+		PictureInformation examplePic = picFiles.get(5);
+		examplePic.print();
+		try {
+            // output file for download --> storage location on local system to download file
+            InputStream in;
+            try {
+            	in = client.files().download(imgsPath + examplePic.getFileName()).getInputStream();
+             } finally {
+             }
+         } catch (DbxException e) {
+             // error downloading file
+             Logger.log("Nicht downloadbar");
+        	 // JOptionPane.showMessageDialog(null, "Unable to download file to local system\n Error: " + e);
+         //} catch (IOException e) {
+             // error downloading file
+        	// Logger.log("Kein Stream zu oeffnen.");
+        // }
+		
+		 // suche imgs Ordner weiter oben, vergleiche
+		 // wenn nicht da, create und lade Bilder rein
+		
+		
 	}	
 	
 }

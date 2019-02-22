@@ -40,8 +40,7 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		this.name = info.name;
 		this.secret = info.secret;
 		this.tags = info.tags;
-		
-		
+		this.text = info.text;	
 	}
 	
 	public void print() {
@@ -53,6 +52,9 @@ public class WritingInformation extends Information implements DataBaseStorable 
 	}
 	
 	// placeholder
-	public boolean storeInDataBase() { return true;	}
+	public boolean storeInDataBase() { 
+		print();
+		return true;
+	}
 	
 }

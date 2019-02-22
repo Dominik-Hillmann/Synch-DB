@@ -14,11 +14,19 @@ public class Logger {
 		System.out.println(content);
 	}
 	
+	public static void log(int content) {
+		System.out.println(content);
+	}
+	
 	/**
 	 * Appends everything that was logged during the run of the program to a file accessible in the Dropbox.
 	 */
 	public static void appendToLogFile() {
 		// later
+	}
+	
+	public static void log(boolean content) {
+		System.out.println(content);
 	}
 	
 }

@@ -67,4 +67,15 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		return true;	
 	}
 	
+	/**
+	 * 
+	 */
+	public void writePic() {
+		
+	}
+	
+	public String getFileName() {
+		return filename;
+	}
+	
 }
