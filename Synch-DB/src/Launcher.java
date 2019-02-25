@@ -1,3 +1,6 @@
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -10,6 +13,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.imageio.ImageIO;
 
 import com.dropbox.core.DbxDownloader;
 import com.dropbox.core.DbxException;
@@ -28,6 +33,7 @@ public class Launcher {
 	private static final String USER_DIR = "/user-info/";
 	private static final String PIC_DIR = "/pic-info/";
 	private static final String WRIT_DIR = "/writing-info/";
+	private static final String PIC_STORAGE = "/home/dominik/DB-Synch-imgs/";
 	
 	public static void main(String[] args) {
 	
@@ -136,9 +142,15 @@ public class Launcher {
 		Logger.appendToLogFile();
 		
 		
-	    Path imgsPath = Paths.get("/home/dominik/DB-Synch-imgs/");
+		
+		
+		
+		
+		
+	    Path imgsPath = Paths.get(PIC_STORAGE);
+	    
 	    Logger.log(imgsPath.toAbsolutePath().toString());
-		Logger.log(Files.isDirectory(imgsPath.toAbsolutePath()));
+		//Logger.log(Files.isDirectory(imgsPath.toAbsolutePath()));
 		
 		if (!Files.isDirectory(imgsPath.toAbsolutePath())) {
 			(new File(imgsPath.toAbsolutePath().toString())).mkdirs();
@@ -149,13 +161,35 @@ public class Launcher {
 		
 		
 		PictureInformation examplePic = picFiles.get(5);
-		examplePic.print();
+		File additionalPic = new File(PIC_STORAGE + examplePic.getFileName());
+		Logger.log("is File " + additionalPic.isFile());
+		if (!additionalPic.isFile()) {
+			try {
+				additionalPic.createNewFile();
+			} catch (IOException e) {
+				Logger.log("Konnte file " + additionalPic.getName() + " konnte nicht erstellt.");
+				e.printStackTrace();
+			}
+		}
+		
+		
+		
 		try {
-            // output file for download --> storage location on local system to download file
-            InputStream in;
+			// output file for download --> storage location on local system to download file
+			BufferedImage bufferedImage = null;
             try {
-            	in = client.files().download(imgsPath + examplePic.getFileName()).getInputStream();
-             } finally {
+            	bufferedImage = ImageIO.read(
+            		client.files()
+            		.download(imgsPath.toAbsolutePath().toString() + examplePic.getFileName())
+            		.getInputStream()
+            		.readAllBytes()
+            	);
+            	
+            	ImageIO.write(bufferedImage, "jpg", additionalPic);            	
+            	
+             } catch (IOException e) {
+            	 e.printStackTrace();
+            	 Logger.log("Konnte Bild nicht schreiben");
              }
          } catch (DbxException e) {
              // error downloading file
@@ -169,7 +203,7 @@ public class Launcher {
 		 // suche imgs Ordner weiter oben, vergleiche
 		 // wenn nicht da, create und lade Bilder rein
 		
-		
+         }
 	}	
 	
 }
