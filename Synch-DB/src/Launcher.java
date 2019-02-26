@@ -33,7 +33,9 @@ public class Launcher {
 	private static final String USER_DIR = "/user-info/";
 	private static final String PIC_DIR = "/pic-info/";
 	private static final String WRIT_DIR = "/writing-info/";
-	private static final String PIC_STORAGE = "/home/dominik/DB-Synch-imgs/";
+	
+	private static final String PIC_STORAGE_LOCAL = "/home/dominik/DB-Synch-imgs/";
+	private static final String PIC_STORAGE_DBX = "/img/";
 	
 	public static void main(String[] args) {
 	
@@ -75,7 +77,7 @@ public class Launcher {
 		}
 		
 		for (UserInformation info : userFiles) {
-			info.storeInDataBase();
+			// info.storeInDataBase();
 		}
 		
 		Logger.log("\n\n");
@@ -105,7 +107,7 @@ public class Launcher {
 		
 		Logger.log(picFiles.size());
 		for (PictureInformation info : picFiles) {
-			info.storeInDataBase();
+			// info.storeInDataBase();
 		}
 		
 		Logger.log("\n\n");
@@ -135,7 +137,7 @@ public class Launcher {
 		
 		Logger.log(writFiles.size());
 		for (WritingInformation info : writFiles) {
-			info.storeInDataBase();
+			// info.storeInDataBase();
 		}
 		
 		
@@ -147,63 +149,71 @@ public class Launcher {
 		
 		
 		
-	    Path imgsPath = Paths.get(PIC_STORAGE);
+	    Path localImgsDir = Paths.get(PIC_STORAGE_LOCAL);
 	    
-	    Logger.log(imgsPath.toAbsolutePath().toString());
-		//Logger.log(Files.isDirectory(imgsPath.toAbsolutePath()));
+	    // Logger.log(localImgsDir.toAbsolutePath().toString());
 		
-		if (!Files.isDirectory(imgsPath.toAbsolutePath())) {
-			(new File(imgsPath.toAbsolutePath().toString())).mkdirs();
+	    // If the local dir does not yet exist, create it.
+		if (!Files.isDirectory(localImgsDir.toAbsolutePath())) {
+			(new File(localImgsDir.toAbsolutePath().toString())).mkdirs();
 			Logger.log("created");
 		} else {
 			Logger.log("Dir already exists.");
 		}
 		
 		
-		PictureInformation examplePic = picFiles.get(5);
-		File additionalPic = new File(PIC_STORAGE + examplePic.getFileName());
-		Logger.log("is File " + additionalPic.isFile());
-		if (!additionalPic.isFile()) {
+		List<PictureInformation> examplePics = picFiles.subList(0, picFiles.size());
+		
+		for (PictureInformation examplePic : examplePics) {
+			
+			Logger.log();
+			
+			// Does picture with this name already exist? If not, create the file.
+			File picToBeStored = new File(localImgsDir.toAbsolutePath().toString() + "/" + examplePic.getFileName());
+			Logger.log("is File " + picToBeStored.isFile());
+			if (!picToBeStored.isFile()) {
+				try {
+					picToBeStored.createNewFile();
+				} catch (IOException e) {
+					Logger.log("Konnte file " + picToBeStored.getName() + " konnte nicht erstellt.");
+					e.printStackTrace();
+				}
+			} else Logger.log("File " + picToBeStored.getName() + " existiert bereits.");
+			
+			
+			
 			try {
-				additionalPic.createNewFile();
+				// output file for download --> storage location on local system to download file
+				BufferedImage bufferedImage = null;
+				Logger.log(PIC_DIR + examplePic.getFileName());
+	            bufferedImage = ImageIO.read(
+	            	client.files()
+	            		.download(PIC_STORAGE_DBX + examplePic.getFileName())
+	            		.getInputStream()
+	            );
+	            	
+	            Logger.log(bufferedImage.getWidth());
+	            Logger.log(bufferedImage.getHeight());
+	            
+	            
+	            // Get extension of the file first:
+	            String imgName = picToBeStored.getName();
+	            int extensionStartIndex = imgName.lastIndexOf(".");
+	            String extension = imgName.substring(extensionStartIndex + 1);
+	            Logger.log(extension);
+	            
+	            // Write the picture into local directory.
+	            ImageIO.write(bufferedImage, extension, picToBeStored);          
+	            
 			} catch (IOException e) {
-				Logger.log("Konnte file " + additionalPic.getName() + " konnte nicht erstellt.");
+				Logger.log("Konnte Bild nicht schreiben");
+				e.printStackTrace();
+				
+			} catch (DbxException e) {
+				Logger.log("Konnte Bild nicht herunterladen.");
 				e.printStackTrace();
 			}
 		}
-		
-		
-		
-		try {
-			// output file for download --> storage location on local system to download file
-			BufferedImage bufferedImage = null;
-            try {
-            	bufferedImage = ImageIO.read(
-            		client.files()
-            		.download(imgsPath.toAbsolutePath().toString() + examplePic.getFileName())
-            		.getInputStream()
-            		.readAllBytes()
-            	);
-            	
-            	ImageIO.write(bufferedImage, "jpg", additionalPic);            	
-            	
-             } catch (IOException e) {
-            	 e.printStackTrace();
-            	 Logger.log("Konnte Bild nicht schreiben");
-             }
-         } catch (DbxException e) {
-             // error downloading file
-             Logger.log("Nicht downloadbar");
-        	 // JOptionPane.showMessageDialog(null, "Unable to download file to local system\n Error: " + e);
-         //} catch (IOException e) {
-             // error downloading file
-        	// Logger.log("Kein Stream zu oeffnen.");
-        // }
-		
-		 // suche imgs Ordner weiter oben, vergleiche
-		 // wenn nicht da, create und lade Bilder rein
-		
-         }
 	}	
 	
 }

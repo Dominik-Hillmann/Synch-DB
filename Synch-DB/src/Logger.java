@@ -29,4 +29,8 @@ public class Logger {
 		System.out.println(content);
 	}
 	
+	public static void log() {
+		System.out.println();
+	}
+	
 }
