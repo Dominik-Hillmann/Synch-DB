@@ -193,8 +193,7 @@ public class Launcher {
 	            );
 	            	
 	            Logger.log(bufferedImage.getWidth());
-	            Logger.log(bufferedImage.getHeight());
-	            
+	            Logger.log(bufferedImage.getHeight());	            
 	            
 	            // Get extension of the file first:
 	            String imgName = picToBeStored.getName();
