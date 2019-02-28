@@ -9,5 +9,6 @@
 	<classpathentry kind="lib" path="/home/dominik/Downloads/dropbox-core-sdk-3.0.11/dropbox-core-sdk-3.0.11.jar"/>
 	<classpathentry kind="lib" path="/home/dominik/Downloads/dropbox-core-sdk-3.0.11/lib/jackson-core-2.7.4.jar"/>
 	<classpathentry kind="lib" path="/home/dominik/Downloads/gson-2.8.5.jar"/>
+	<classpathentry kind="lib" path="/home/dominik/Downloads/mysql-connector-java-5.1.47/mysql-connector-java-5.1.47-bin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

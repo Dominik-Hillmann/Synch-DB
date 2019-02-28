@@ -11,6 +11,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +31,7 @@ import com.dropbox.core.v2.files.Metadata;
 import com.dropbox.core.v2.users.FullAccount;
 import com.google.gson.Gson;
 
+
 public class Launcher {
 	
 	private static final String TOKEN = DropboxAccessToken.getToken();
@@ -38,6 +44,26 @@ public class Launcher {
 	private static final String PIC_STORAGE_DBX = "/img/";
 	
 	public static void main(String[] args) {
+		
+		Connection dbc = getConnection();
+		
+		PreparedStatement statement;
+		try {
+			statement = dbc.prepareStatement("SHOW TABLES;");
+			ResultSet result = statement.executeQuery();
+			
+			// wenn kein result erwartet, hier speziel für Änderungen in der database
+			// statement.executeUpdate();
+			
+			while (result.next()) {
+				Logger.log(result.getString(1));
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		
 	
 		// First try to import and use the Dropbox library properly.
 		DbxRequestConfig config = DbxRequestConfig.newBuilder("Synch-DB").build();
@@ -215,10 +241,33 @@ public class Launcher {
 		}
 	}	
 	
+	public static Connection getConnection() {		
+		try {
+			String driverName = "com.mysql.jdbc.Driver";
+			String dataBaseUrl = "jdbc:mysql://localhost:3306/db_synchro";
+			
+			Class.forName(driverName);
+			
+			Connection conn = DriverManager.getConnection(
+				dataBaseUrl,
+				DataBaseAccess.username,
+				DataBaseAccess.password
+			);
+			Logger.log("Connected to database.");
+			
+			return conn;
+		} catch (Exception ex) {
+			Logger.log("Could not connect to database.");
+			return null;
+		}
+	}
+	
+	
 }
 
 /**
  * IDEEN
  * den Log wieder in die DB laden, um Fehler sehen zu können
  * SQL-Files, um Datenbank wieder auf Raspi herstellen zu können.
+ * Fotos auf der Hauptseite über DBX bestimmen.
  */
