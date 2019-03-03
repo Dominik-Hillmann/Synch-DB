@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.sql.Connection;
 
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
@@ -67,15 +68,53 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		return true;	
 	}
 	
-	/**
-	 * 
-	 */
-	public void writePic() {
-		
-	}
+
 	
 	public String getFileName() {
 		return filename;
 	}
 	
+	public String getName() {
+		return name;
+	}
+	
+	public String getDateStr() {
+		String dayStr = String.valueOf(day);
+		String monthStr = String.valueOf(month);
+		String yearStr = String.valueOf(year);
+		return yearStr + "-" + monthStr + "-" + dayStr;
+	}
+	
+	public String getDescription() {
+		return description;
+	}
+	
+	public boolean isSecret() {
+		return secret;
+	}
+	
+	public boolean postedToTwitter() {
+		return twitter;
+	}
+	
+	public boolean postedToInsta() {
+		return instagram;
+	}
+	
+	public boolean isSameAs(DataBaseStorable storable, Connection database) {
+		
+		PictureInformation compareInfo;
+		try {
+			// If the storable is not even a PictureInformation, it will not be the same.
+			compareInfo = (PictureInformation) storable;
+		} catch (Exception e) {
+			return false;
+		}
+		
+		boolean sameID = getFileName().equals(compareInfo.getFileName());
+		
+		
+		
+		return true;
+	}
 }

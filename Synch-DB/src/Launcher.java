@@ -48,22 +48,8 @@ public class Launcher {
 		Connection dbc = getConnection();
 		
 		PreparedStatement statement;
-		try {
-			statement = dbc.prepareStatement("SHOW TABLES;");
-			ResultSet result = statement.executeQuery();
-			
-			// wenn kein result erwartet, hier speziel für Änderungen in der database
-			// statement.executeUpdate();
-			
-			while (result.next()) {
-				Logger.log(result.getString(1));
-			}
-		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
-		
+		PreparedStatement statement2;
+		PreparedStatement statement3;
 	
 		// First try to import and use the Dropbox library properly.
 		DbxRequestConfig config = DbxRequestConfig.newBuilder("Synch-DB").build();
@@ -187,7 +173,7 @@ public class Launcher {
 			Logger.log("Dir already exists.");
 		}
 		
-		
+
 		List<PictureInformation> examplePics = picFiles.subList(0, picFiles.size());
 		
 		for (PictureInformation examplePic : examplePics) {
@@ -238,6 +224,45 @@ public class Launcher {
 				Logger.log("Konnte Bild nicht herunterladen.");
 				e.printStackTrace();
 			}
+		}
+		
+		PictureInformation insertPic = examplePics.get(2);
+		try {
+			statement = dbc.prepareStatement("SELECT * FROM pic_info;");
+			ResultSet result = statement.executeQuery();
+			while (result.next()) {
+				Logger.log(result.getString(7));
+			}
+			
+			String sqlString2 = "INSERT INTO pic_info VALUES ("
+				+ "'" + insertPic.getFileName() + "'" + "," 
+				+ "'" + insertPic.getName() + "'" + "," 
+				+ "'" + insertPic.getDateStr() + "'" + ","
+				+ "'" + insertPic.getDescription() + "'" + ","
+				+ "b'" + (insertPic.isSecret() ? 1 : 0) + "'" + ","
+				+ "b'" + (insertPic.postedToTwitter() ? 1 : 0) + "'" + ","
+				+ "b'" + (insertPic.postedToInsta() ? 1 : 0) + "'" + ");";
+			Logger.log(sqlString2);
+			dbc.prepareStatement(sqlString2).executeUpdate();
+			
+			// wenn kein result erwartet, hier speziel für Änderungen in der database
+			// statement.executeUpdate();
+			
+			
+			// Algo fuer den Vergleich und der Aenderung der Eigenschaften in der DB, wenn gleicher filename/ID, aber
+			// irgendwo anderes andere Eigenschaften
+			// wenn DBX-file komplett neuer Filename, dann in die DB.
+			
+			
+		} catch (SQLException sqlEx) {
+			Logger.log("Could not write into database.");
+			Logger.log(sqlEx.getMessage());
+		}		
+			
+		try {
+			dbc.close();
+		} catch (Exception e) {
+			Logger.log("Could not close database connection.");
 		}
 	}	
 	
