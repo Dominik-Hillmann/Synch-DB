@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
@@ -52,9 +54,10 @@ public class WritingInformation extends Information implements DataBaseStorable 
 	}
 	
 	// placeholder
-	public boolean storeInDataBase() { 
+	public void storeInDataBase(Connection database) throws SQLException { 
 		print();
-		return true;
 	}
+	
+	public boolean containsSameData(DataBaseStorable storable, Connection database) throws SQLException { return true; }
 	
 }

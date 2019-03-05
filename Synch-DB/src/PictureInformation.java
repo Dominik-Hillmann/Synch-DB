@@ -1,5 +1,9 @@
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
@@ -19,6 +23,8 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	private String description;
 	private boolean instagram;
 	private boolean twitter;	
+	
+	private static final Path PIC_FOLDER_LOCAL = Paths.get("/home/dominik/DB-Synch-imgs/");
 	
 	/**
 	 * 
@@ -50,7 +56,15 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		this.instagram = info.instagram;
 		this.twitter = info.twitter;
 		
-		
+		// TODO auch noch das Bild an sich speichern
+	}
+	
+	public PictureInformation(ResultSet queryResult) throws IOException, DbxException {
+		// 
+	}
+	
+	private void savePic(String filename, DbxClientV2 client) throws IOException, DbxException {
+		// TODO Finden des Bildes und einfügen in den Ordner
 	}
 	
 	public void print() {
@@ -61,15 +75,25 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		System.out.println(description + "\n");
 	}
 	
-	
-	// placeholder
-	public boolean storeInDataBase() { 
-		print(); // voerst
-		return true;	
+	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException { 
+		String sqlString = "INSERT INTO pic_info VALUES ("
+			+ "'" + getFileName() + "'" + "," 
+			+ "'" + getName() + "'" + "," 
+			+ "'" + getDateStr() + "'" + ","
+			+ "'" + getDescription() + "'" + ","
+			+ "b'" + (isSecret() ? 1 : 0) + "'" + ","
+			+ "b'" + (postedToTwitter() ? 1 : 0) + "'" + ","
+			+ "b'" + (postedToInsta() ? 1 : 0) + "'" + ");";
+		
+		try {
+			savePic(getFileName(), client);
+		} catch (Exception e) {
+			throw new SQLException("Could not find any picture with the same filename. Information was not inserted into database.");
+		}
+		// Not in finally because information is not supposed to be inserted into database.
+		database.prepareStatement(sqlString).executeUpdate();
 	}
-	
-
-	
+		
 	public String getFileName() {
 		return filename;
 	}
@@ -101,8 +125,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		return instagram;
 	}
 	
-	public boolean isSameAs(DataBaseStorable storable, Connection database) {
-		
+	public boolean containsSameData(DataBaseStorable storable, Connection database) throws SQLException {
 		PictureInformation compareInfo;
 		try {
 			// If the storable is not even a PictureInformation, it will not be the same.
@@ -111,10 +134,12 @@ public class PictureInformation extends Information implements DataBaseStorable 
 			return false;
 		}
 		
-		boolean sameID = getFileName().equals(compareInfo.getFileName());
-		
-		
-		
-		return true;
+		return getFileName().equals(compareInfo.getFileName())
+			&& getName().equals(compareInfo.getName())
+			&& getDateStr().equals(compareInfo.getName())
+			&& getDescription().equals(compareInfo.getName())
+			&& isSecret() == compareInfo.isSecret()
+			&& postedToTwitter() == compareInfo.postedToTwitter()
+			&& postedToInsta() == compareInfo.postedToInsta();
 	}
 }

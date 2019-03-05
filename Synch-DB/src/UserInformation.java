@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
@@ -56,10 +58,11 @@ public class UserInformation extends Information implements DataBaseStorable {
 		System.out.println();
 	}
 	
-	public boolean storeInDataBase() {
+	public void storeInDataBase(Connection database) throws SQLException {
 		print(); // vorerst
-		return true;
 	}
 	
 	private String encrypt(String inStr) { return "later"; }
+	
+	public boolean containsSameData(DataBaseStorable storable, Connection database) throws SQLException { return true; }
 }

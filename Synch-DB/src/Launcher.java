@@ -126,6 +126,9 @@ public class Launcher {
 		
 		
 		
+		
+		
+		
 		var writFiles = new ArrayList<WritingInformation>();
 		var writFileNames = new ArrayList<String>();
 		try {
@@ -227,12 +230,13 @@ public class Launcher {
 		}
 		
 		PictureInformation insertPic = examplePics.get(2);
-		try {
-			statement = dbc.prepareStatement("SELECT * FROM pic_info;");
-			ResultSet result = statement.executeQuery();
-			while (result.next()) {
-				Logger.log(result.getString(7));
-			}
+			try {
+				statement = dbc.prepareStatement("SELECT * FROM pic_info;");
+				ResultSet result = statement.executeQuery();
+				
+				while (result.next()) {
+					Logger.log(result.getString(7));
+				}
 			
 			String sqlString2 = "INSERT INTO pic_info VALUES ("
 				+ "'" + insertPic.getFileName() + "'" + "," 
@@ -264,6 +268,12 @@ public class Launcher {
 		} catch (Exception e) {
 			Logger.log("Could not close database connection.");
 		}
+		
+		PictureInformation test1 = picFiles.get(5);
+		var test2 = picFiles.get(5);
+		var test3 = picFiles.get(3);
+		Logger.log("Is same: " + test1.equals(test2));
+		Logger.log("Is same: " + test1.equals(test3));
 	}	
 	
 	public static Connection getConnection() {		
@@ -286,6 +296,19 @@ public class Launcher {
 			return null;
 		}
 	}
+	
+	/**
+	 *	 Für jede Ressourcenart:
+	 *	 Vorgehen Vergleich DBX-Inhalt und MySQL:
+	 *    	Lade alle DBX-Inhalte in eine ArrayList.
+	 *    	Lade alle Datenbank-Inhalte in eine Liste --> TODO Konstruktor
+	 *    	Gehe durch eine DBX-Liste, durchsuche für jeden die andere Liste
+	 *    		wenn Eintrag mit anderer Eigenschaft, aber gleichem filename, update die Datenbank
+	 *    		Eintrag wurde überhaupt nicht gefunden, dann trage in die Datenbank ein
+	 *    			Posten auf Instagram und Twitter
+	 *     	Gehe durch die Datenbank-Liste und suche in der DBX-Liste:
+	 *     		wenn sich selbst nicht in der DBX-Liste gefunden, dann loesche dich
+	 */
 	
 	
 }
