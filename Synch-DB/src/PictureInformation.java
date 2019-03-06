@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -59,8 +60,24 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		// TODO auch noch das Bild an sich speichern
 	}
 	
+
+	@SuppressWarnings("deprecation")
 	public PictureInformation(ResultSet queryResult) throws IOException, DbxException {
-		// 
+		try {/*
+			this.filename = queryResult.getString("filename");
+			this.name = queryResult.getString("name");
+			this.description = queryResult.getString("explanation");
+			
+			this.secret = queryResult.getBoolean("kept_secret");
+			this.instagram = queryResult.getBoolean("insta_posted");
+			this.twitter = queryResult.getBoolean("twitter_posted");*/
+			
+			Logger.log(queryResult.getString("date") + " LALALA");
+			// ********************************************************* TODO
+			Logger.log(String.valueOf((queryResult.getDate("date").getDay())) + " LALALA");
+		} catch (SQLException e) {
+			Logger.log("Konnte nicht retrieven: " + e.getMessage());
+		}
 	}
 	
 	private void savePic(String filename, DbxClientV2 client) throws IOException, DbxException {

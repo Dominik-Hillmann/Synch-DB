@@ -46,27 +46,58 @@ public class Launcher {
 	public static void main(String[] args) {
 		
 		Connection dbc = getConnection();
-		
-		PreparedStatement statement;
-		PreparedStatement statement2;
-		PreparedStatement statement3;
 	
 		// First try to import and use the Dropbox library properly.
 		DbxRequestConfig config = DbxRequestConfig.newBuilder("Synch-DB").build();
 		// Groupings of parameters of how to contact the Dropbox API.
 		DbxClientV2 client = new DbxClientV2(config, TOKEN);
         
-		// FullAccount account = client.users().getCurrentAccount();
-		// ListFolderResult resultUsers = client.files().listFolder("/user-info");
+		// Vergleich der Picture-Information:
+		// Schritt 1.1: alle Information aus pic_info-Ordner in ArrayList.
+		var picFilesDbx = new ArrayList<PictureInformation>();
+		var picFileNames = new ArrayList<String>();
+		// Zuerst die Names der Dateien, dann in den Konstruktoren die eigentlichen Dateien herunterladen.
+		try {
+			client.files()
+				.listFolder(PIC_DIR)
+				.getEntries()
+				.forEach(file -> picFileNames.add(file.getName()));					
+		} catch (DbxException e) {
+			Logger.log("Did not find directory " + PIC_DIR + " in the DBX.");
+		}
 		
-		/*** <TEST> ***/		
-		// PictureInformation pic1 = new PictureInformation("complexity.json", client);
-		// pic1.print();		
-		// PictureInformation pic2 = new PictureInformation("schlange.json", client);
-		// pic2.print();		
-		/*** </TEST> ***/
+		for (String name : picFileNames) {
+			try {
+				picFilesDbx.add(new PictureInformation(name, client));
+			} catch (DbxException | IOException e) {
+				Logger.log("Could not download file named " + name + ".");
+				e.printStackTrace();
+				continue; // Try the next one.
+			} 
+		}
 		
-
+		// Schritt 1.2: alle Information aus pic_infos in der MySQL-DB in eine ArrayList.
+		var picFilesSql = new ArrayList<PictureInformation>();
+		ResultSet resPicQuery = null;		
+		try {		
+			PreparedStatement picQuery = dbc.prepareStatement(
+				"SELECT filename, name, date, explanation, kept_secret," 
+					+ "insta_posted, twitter_posted FROM db_synchro.pic_info;"
+			);
+			resPicQuery = picQuery.executeQuery();
+		} catch (SQLException e) {
+			Logger.log("Die Query für die Bildinformationen konnte nicht ausgeführt werden: " + e.getMessage());
+		}
+		
+		try {
+			while (resPicQuery.next()) {
+				picFilesSql.add(new PictureInformation(resPicQuery));
+				// Logger.log(resPicQuery.getString("filename") + "\n");
+			}
+		} catch (Exception e) {
+			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
+		}
+		/*
 		var userFiles = new ArrayList<UserInformation>();
 		var userFileNames = new ArrayList<String>();
 		try {
@@ -93,42 +124,12 @@ public class Launcher {
 		}
 		
 		Logger.log("\n\n");
+		*/
 		
 		
+	
 		
-		var picFiles = new ArrayList<PictureInformation>();
-		var picFileNames = new ArrayList<String>();
-		try {
-			client.files()
-				.listFolder(PIC_DIR)
-				.getEntries()
-				.forEach(file -> picFileNames.add(file.getName()));					
-		} catch (DbxException e) {
-			Logger.log("Did not find directory " + PIC_DIR + ".");
-		}
-		
-		for (String name : picFileNames) {
-			try {
-				picFiles.add(new PictureInformation(name, client));
-			} catch (DbxException | IOException e) {
-				Logger.log("Could not download file named " + name + ".");
-				e.printStackTrace();
-				continue;
-			} 
-		}
-		
-		Logger.log(picFiles.size());
-		for (PictureInformation info : picFiles) {
-			// info.storeInDataBase();
-		}
-		
-		Logger.log("\n\n");
-		
-		
-		
-		
-		
-		
+		/*
 		var writFiles = new ArrayList<WritingInformation>();
 		var writFileNames = new ArrayList<String>();
 		try {
@@ -154,9 +155,7 @@ public class Launcher {
 		for (WritingInformation info : writFiles) {
 			// info.storeInDataBase();
 		}
-		
-		
-		Logger.appendToLogFile();
+		*/
 		
 		
 		
@@ -177,7 +176,7 @@ public class Launcher {
 		}
 		
 
-		List<PictureInformation> examplePics = picFiles.subList(0, picFiles.size());
+		List<PictureInformation> examplePics = picFilesDbx.subList(0, picFilesDbx.size());
 		
 		for (PictureInformation examplePic : examplePics) {
 			
@@ -229,6 +228,7 @@ public class Launcher {
 			}
 		}
 		
+		PreparedStatement statement;
 		PictureInformation insertPic = examplePics.get(2);
 			try {
 				statement = dbc.prepareStatement("SELECT * FROM pic_info;");
@@ -269,11 +269,15 @@ public class Launcher {
 			Logger.log("Could not close database connection.");
 		}
 		
-		PictureInformation test1 = picFiles.get(5);
-		var test2 = picFiles.get(5);
-		var test3 = picFiles.get(3);
+		PictureInformation test1 = picFilesDbx.get(5);
+		var test2 = picFilesDbx.get(5);
+		var test3 = picFilesDbx.get(3);
 		Logger.log("Is same: " + test1.equals(test2));
 		Logger.log("Is same: " + test1.equals(test3));
+		
+		
+		
+		Logger.appendToLogFile();
 	}	
 	
 	public static Connection getConnection() {		
