@@ -2,9 +2,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Locale;
 
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
@@ -19,12 +22,12 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	private String name;
 	private String filename;
 	private boolean secret;
-	private String[] tags;
 	
 	private String description;
 	private boolean instagram;
-	private boolean twitter;	
+	private boolean twitter;
 	
+	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.GERMAN);
 	private static final Path PIC_FOLDER_LOCAL = Paths.get("/home/dominik/DB-Synch-imgs/");
 	
 	/**
@@ -52,7 +55,6 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		this.name = info.name;
 		this.filename = info.filename;
 		this.secret = info.secret;
-		this.tags = info.tags;
 		this.description = info.description;
 		this.instagram = info.instagram;
 		this.twitter = info.twitter;
@@ -61,20 +63,20 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	}
 	
 
-	@SuppressWarnings("deprecation")
 	public PictureInformation(ResultSet queryResult) throws IOException, DbxException {
-		try {/*
+		try {
+			LocalDate date = LocalDate.parse(queryResult.getString("date"), formatter);
+			this.day = date.getDayOfMonth();
+			this.month = date.getMonthValue();
+			this.year = date.getYear();
+			
 			this.filename = queryResult.getString("filename");
 			this.name = queryResult.getString("name");
 			this.description = queryResult.getString("explanation");
 			
 			this.secret = queryResult.getBoolean("kept_secret");
 			this.instagram = queryResult.getBoolean("insta_posted");
-			this.twitter = queryResult.getBoolean("twitter_posted");*/
-			
-			Logger.log(queryResult.getString("date") + " LALALA");
-			// ********************************************************* TODO
-			Logger.log(String.valueOf((queryResult.getDate("date").getDay())) + " LALALA");
+			this.twitter = queryResult.getBoolean("twitter_posted");
 		} catch (SQLException e) {
 			Logger.log("Konnte nicht retrieven: " + e.getMessage());
 		}
@@ -87,13 +89,11 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	public void print() {
 		System.out.println("Date: " + String.valueOf(day) + "." + String.valueOf(month) + "." + String.valueOf(year));
 		System.out.println("Names: " + name + ", " + filename);
-		for (String tag : tags) System.out.println(tag);
-		System.out.println("Number of tags: " + String.valueOf(tags.length));
 		System.out.println(description + "\n");
 	}
 	
 	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException { 
-		String sqlString = "INSERT INTO pic_info VALUES ("
+		String sqlString = "INSERT INTO db_synchro.pic_info VALUES ("
 			+ "'" + getFileName() + "'" + "," 
 			+ "'" + getName() + "'" + "," 
 			+ "'" + getDateStr() + "'" + ","
@@ -142,21 +142,31 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		return instagram;
 	}
 	
-	public boolean containsSameData(DataBaseStorable storable, Connection database) throws SQLException {
+	public DataChangeMarker containsSameData(DataBaseStorable storable, Connection database) throws SQLException {
 		PictureInformation compareInfo;
 		try {
 			// If the storable is not even a PictureInformation, it will not be the same.
 			compareInfo = (PictureInformation) storable;
 		} catch (Exception e) {
-			return false;
+			return DataChangeMarker.NOT_SAME;
 		}
 		
 		return getFileName().equals(compareInfo.getFileName())
 			&& getName().equals(compareInfo.getName())
-			&& getDateStr().equals(compareInfo.getName())
-			&& getDescription().equals(compareInfo.getName())
+			&& getDateStr().equals(compareInfo.getDateStr())
+			&& getDescription().equals(compareInfo.getDescription())
 			&& isSecret() == compareInfo.isSecret()
 			&& postedToTwitter() == compareInfo.postedToTwitter()
-			&& postedToInsta() == compareInfo.postedToInsta();
+			&& postedToInsta() == compareInfo.postedToInsta() ? DataChangeMarker.CHANGED : DataChangeMarker.KEPT_SAME;
+	}
+	
+	public boolean containsElementWithSameData(ArrayList<DataBaseStorable> arr, Connection database) throws SQLException {
+		boolean containsElementWithSameData = false;
+		for (DataBaseStorable info : arr) {
+			if (containsSameData(info, database)) {
+				return true;
+			} else continue;
+		}
+		return false;
 	}
 }

@@ -76,6 +76,17 @@ public class Launcher {
 			} 
 		}
 		
+		var ltest1 = picFilesDbx.get(5);
+		var ltest2 = picFilesDbx.get(5);
+		var ltest3 = picFilesDbx.get(4);
+		try {
+			Logger.log("test1 und test2: " + ltest1.containsSameData(ltest2, dbc));
+			Logger.log("test1 und test1: " + ltest1.containsSameData(ltest1, dbc));
+			Logger.log("test1 und test3: " + ltest1.containsSameData(ltest3, dbc));
+		} catch (SQLException e) {
+			Logger.log("wut? " + e.getMessage());
+		}
+		
 		// Schritt 1.2: alle Information aus pic_infos in der MySQL-DB in eine ArrayList.
 		var picFilesSql = new ArrayList<PictureInformation>();
 		ResultSet resPicQuery = null;		
@@ -92,10 +103,13 @@ public class Launcher {
 		try {
 			while (resPicQuery.next()) {
 				picFilesSql.add(new PictureInformation(resPicQuery));
-				// Logger.log(resPicQuery.getString("filename") + "\n");
 			}
 		} catch (Exception e) {
 			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
+		}
+		
+		for (PictureInformation picInfo : picFilesSql) {
+			picInfo.print();
 		}
 		/*
 		var userFiles = new ArrayList<UserInformation>();
@@ -282,8 +296,8 @@ public class Launcher {
 	
 	public static Connection getConnection() {		
 		try {
-			String driverName = "com.mysql.jdbc.Driver";
-			String dataBaseUrl = "jdbc:mysql://localhost:3306/db_synchro";
+			final String driverName = "com.mysql.jdbc.Driver";
+			final String dataBaseUrl = "jdbc:mysql://localhost:3306/db_synchro";
 			
 			Class.forName(driverName);
 			
@@ -304,9 +318,9 @@ public class Launcher {
 	/**
 	 *	 Für jede Ressourcenart:
 	 *	 Vorgehen Vergleich DBX-Inhalt und MySQL:
-	 *    	Lade alle DBX-Inhalte in eine ArrayList.
-	 *    	Lade alle Datenbank-Inhalte in eine Liste --> TODO Konstruktor
-	 *    	Gehe durch eine DBX-Liste, durchsuche für jeden die andere Liste
+	 *    	Lade alle DBX-Inhalte in eine ArrayList. DONE
+	 *    	Lade alle Datenbank-Inhalte in eine Liste --> TODO Konstruktor DONE
+	 *    	Gehe durch eine DBX-Liste, durchsuche für jeden die andere Liste --> Methode
 	 *    		wenn Eintrag mit anderer Eigenschaft, aber gleichem filename, update die Datenbank
 	 *    		Eintrag wurde überhaupt nicht gefunden, dann trage in die Datenbank ein
 	 *    			Posten auf Instagram und Twitter
