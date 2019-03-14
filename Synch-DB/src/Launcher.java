@@ -43,7 +43,7 @@ public class Launcher {
 	private static final String PIC_STORAGE_LOCAL = "/home/dominik/DB-Synch-imgs/";
 	private static final String PIC_STORAGE_DBX = "/img/";
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		
 		Connection dbc = getConnection();
 	
@@ -79,13 +79,11 @@ public class Launcher {
 		var ltest1 = picFilesDbx.get(5);
 		var ltest2 = picFilesDbx.get(5);
 		var ltest3 = picFilesDbx.get(4);
-		try {
-			Logger.log("test1 und test2: " + ltest1.containsSameData(ltest2, dbc));
-			Logger.log("test1 und test1: " + ltest1.containsSameData(ltest1, dbc));
-			Logger.log("test1 und test3: " + ltest1.containsSameData(ltest3, dbc));
-		} catch (SQLException e) {
-			Logger.log("wut? " + e.getMessage());
-		}
+		
+		Logger.log("test1 und test2: " + ltest1.containsSameData(ltest2).toString());
+		Logger.log("test1 und test1: " + ltest1.containsSameData(ltest1).toString());
+		Logger.log("test1 und test3: " + ltest1.containsSameData(ltest3).toString());
+
 		
 		// Schritt 1.2: alle Information aus pic_infos in der MySQL-DB in eine ArrayList.
 		var picFilesSql = new ArrayList<PictureInformation>();
@@ -108,9 +106,41 @@ public class Launcher {
 			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
 		}
 		
-		for (PictureInformation picInfo : picFilesSql) {
-			picInfo.print();
+		
+		for (PictureInformation picFileDbx : picFilesDbx) {
+			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
+			for (PictureInformation picFileSql : picFilesSql) {
+				markers.add(picFileDbx.containsSameData(picFileSql));
+			}
+			
+			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME) 
+				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				picFileDbx.storeInDataBase(dbc, client);
+			} else if (markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				picFileDbx.updateDataBase(dbc, client);
+			} else if (markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)) {
+				continue;
+			} else {
+				for (var marker : markers) Logger.log(marker.toString());
+				throw new Exception("Did not anticipate this marker structure");
+			}
 		}
+		/*
+		for (var picFileSql : picFilesSql) {
+			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
+			for (var picFileDbx : picFilesDbx) {
+				markers.add(picFileSql.containsSameData(picFileDbx));
+			}
+			
+			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)
+				|| !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				picFileSql.deleteFromDataBase(dbc);
+			}
+		}
+		*/
+		
+		
+		
 		/*
 		var userFiles = new ArrayList<UserInformation>();
 		var userFileNames = new ArrayList<String>();
@@ -321,7 +351,12 @@ public class Launcher {
 	 *    	Lade alle DBX-Inhalte in eine ArrayList. DONE
 	 *    	Lade alle Datenbank-Inhalte in eine Liste --> TODO Konstruktor DONE
 	 *    	Gehe durch eine DBX-Liste, durchsuche für jeden die andere Liste --> Methode
-	 *    		wenn Eintrag mit anderer Eigenschaft, aber gleichem filename, update die Datenbank
+	 *    		SAME FILE_BUT_CHANGED: --> ändere Eigenschaft
+	 *    		SAME_FILE_KEPT_SAME --> nichts
+	 *    	
+	 *    
+	 *    
+	 *    
 	 *    		Eintrag wurde überhaupt nicht gefunden, dann trage in die Datenbank ein
 	 *    			Posten auf Instagram und Twitter
 	 *     	Gehe durch die Datenbank-Liste und suche in der DBX-Liste:

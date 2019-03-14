@@ -110,6 +110,15 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		// Not in finally because information is not supposed to be inserted into database.
 		database.prepareStatement(sqlString).executeUpdate();
 	}
+	
+	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException {
+		deleteFromDataBase(database);
+		storeInDataBase(database, client);
+	}
+	public void deleteFromDataBase(Connection database) throws SQLException {
+		String sqlString = "DELETE FROM db_synchro.pic_info WHERE filename='" + getFileName() + "';";
+		database.prepareStatement(sqlString).executeUpdate();
+	}
 		
 	public String getFileName() {
 		return filename;
@@ -142,24 +151,26 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		return instagram;
 	}
 	
-	public DataChangeMarker containsSameData(DataBaseStorable storable, Connection database) throws SQLException {
+	public DataChangeMarker containsSameData(DataBaseStorable storable) {
 		PictureInformation compareInfo;
 		try {
 			// If the storable is not even a PictureInformation, it will not be the same.
 			compareInfo = (PictureInformation) storable;
 		} catch (Exception e) {
-			return DataChangeMarker.NOT_SAME;
+			return DataChangeMarker.DIFFERENT_TYPE;
 		}
 		
-		return getFileName().equals(compareInfo.getFileName())
-			&& getName().equals(compareInfo.getName())
-			&& getDateStr().equals(compareInfo.getDateStr())
-			&& getDescription().equals(compareInfo.getDescription())
-			&& isSecret() == compareInfo.isSecret()
-			&& postedToTwitter() == compareInfo.postedToTwitter()
-			&& postedToInsta() == compareInfo.postedToInsta() ? DataChangeMarker.CHANGED : DataChangeMarker.KEPT_SAME;
+		if (getFileName().equals(compareInfo.getFileName())) {
+			return getName().equals(compareInfo.getName())
+				&& getDateStr().equals(compareInfo.getDateStr())
+				&& getDescription().equals(compareInfo.getDescription())
+				&& isSecret() == compareInfo.isSecret()
+				&& postedToTwitter() == compareInfo.postedToTwitter()
+				&& postedToInsta() == compareInfo.postedToInsta() 
+				? DataChangeMarker.SAME_FILE_KEPT_SAME : DataChangeMarker.SAME_FILE_CHANGED;
+		} else return DataChangeMarker.DIFFERENT_FILE;
 	}
-	
+	/*
 	public boolean containsElementWithSameData(ArrayList<DataBaseStorable> arr, Connection database) throws SQLException {
 		boolean containsElementWithSameData = false;
 		for (DataBaseStorable info : arr) {
@@ -169,4 +180,5 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		}
 		return false;
 	}
+	*/
 }
