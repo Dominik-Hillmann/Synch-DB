@@ -44,6 +44,16 @@ public class Launcher {
 	private static final String PIC_STORAGE_DBX = "/img/";
 	
 	public static void main(String[] args) throws Exception {
+		String command1 = "$test = 1;";
+		String command = "php -r 'echo password_hash(\"Das ist ein Test\", PASSWORD_DEFAULT);'";
+		String command2 = "echo Test";
+		Logger.log(Console.execute(command1));
+		Logger.log(Console.execute("echo $test"));
+		// Logger.log(Console.execute("echo \n\n\n"));
+		
+		
+		
+		
 		
 		Connection dbc = getConnection();
 	
@@ -153,6 +163,7 @@ public class Launcher {
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)
 				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
 				picFileSql.deleteFromDataBase(dbc);
+				Logger.log("Would delete " + picFileSql.getFileName());
 			}
 		}
 				
