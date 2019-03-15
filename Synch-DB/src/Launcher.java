@@ -76,15 +76,6 @@ public class Launcher {
 			} 
 		}
 		
-		var ltest1 = picFilesDbx.get(5);
-		var ltest2 = picFilesDbx.get(5);
-		var ltest3 = picFilesDbx.get(4);
-		
-		Logger.log("test1 und test2: " + ltest1.containsSameData(ltest2).toString());
-		Logger.log("test1 und test1: " + ltest1.containsSameData(ltest1).toString());
-		Logger.log("test1 und test3: " + ltest1.containsSameData(ltest3).toString());
-
-		
 		// Schritt 1.2: alle Information aus pic_infos in der MySQL-DB in eine ArrayList.
 		var picFilesSql = new ArrayList<PictureInformation>();
 		ResultSet resPicQuery = null;		
@@ -109,6 +100,7 @@ public class Launcher {
 		
 		for (PictureInformation picFileDbx : picFilesDbx) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
+			
 			for (PictureInformation picFileSql : picFilesSql) {
 				markers.add(picFileDbx.containsSameData(picFileSql));
 			}
@@ -125,21 +117,45 @@ public class Launcher {
 				throw new Exception("Did not anticipate this marker structure");
 			}
 		}
-		/*
+		
+		// picFilesSql neu, da Information nun outdated
+		// *******
+		picFilesSql.clear();
+		resPicQuery = null;		
+		try {		
+			PreparedStatement picQuery = dbc.prepareStatement(
+				"SELECT filename, name, date, explanation, kept_secret," 
+					+ "insta_posted, twitter_posted FROM db_synchro.pic_info;"
+			);
+			resPicQuery = picQuery.executeQuery();
+		} catch (SQLException e) {
+			Logger.log("Die Query für die Bildinformationen konnte nicht ausgeführt werden: " + e.getMessage());
+		}
+		
+		try {
+			while (resPicQuery.next()) {
+				picFilesSql.add(new PictureInformation(resPicQuery));
+			}
+		} catch (Exception e) {
+			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
+		}
+		// *******
+		
 		for (var picFileSql : picFilesSql) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			for (var picFileDbx : picFilesDbx) {
 				markers.add(picFileSql.containsSameData(picFileDbx));
 			}
+			// Logger.log(markers.size());
+			for (var marker : markers) Logger.log(marker.toString());
+			Logger.log();
 			
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)
-				|| !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
 				picFileSql.deleteFromDataBase(dbc);
 			}
 		}
-		*/
-		
-		
+				
 		
 		/*
 		var userFiles = new ArrayList<UserInformation>();
@@ -344,26 +360,7 @@ public class Launcher {
 			return null;
 		}
 	}
-	
-	/**
-	 *	 Für jede Ressourcenart:
-	 *	 Vorgehen Vergleich DBX-Inhalt und MySQL:
-	 *    	Lade alle DBX-Inhalte in eine ArrayList. DONE
-	 *    	Lade alle Datenbank-Inhalte in eine Liste --> TODO Konstruktor DONE
-	 *    	Gehe durch eine DBX-Liste, durchsuche für jeden die andere Liste --> Methode
-	 *    		SAME FILE_BUT_CHANGED: --> ändere Eigenschaft
-	 *    		SAME_FILE_KEPT_SAME --> nichts
-	 *    	
-	 *    
-	 *    
-	 *    
-	 *    		Eintrag wurde überhaupt nicht gefunden, dann trage in die Datenbank ein
-	 *    			Posten auf Instagram und Twitter
-	 *     	Gehe durch die Datenbank-Liste und suche in der DBX-Liste:
-	 *     		wenn sich selbst nicht in der DBX-Liste gefunden, dann loesche dich
-	 */
-	
-	
+
 }
 
 /**

@@ -115,11 +115,12 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		deleteFromDataBase(database);
 		storeInDataBase(database, client);
 	}
+	
 	public void deleteFromDataBase(Connection database) throws SQLException {
 		String sqlString = "DELETE FROM db_synchro.pic_info WHERE filename='" + getFileName() + "';";
 		database.prepareStatement(sqlString).executeUpdate();
 	}
-		
+
 	public String getFileName() {
 		return filename;
 	}
