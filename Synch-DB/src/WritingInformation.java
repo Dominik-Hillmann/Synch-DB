@@ -54,10 +54,30 @@ public class WritingInformation extends Information implements DataBaseStorable 
 	}
 	
 	// placeholder
-	public void storeInDataBase(Connection database) throws SQLException { 
-		print();
+	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {
+		
+	}
+
+	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException {
+		
 	}
 	
-	public boolean containsSameData(DataBaseStorable storable, Connection database) throws SQLException { return true; }
+	public void deleteFromDataBase(Connection database) throws SQLException {
+		
+	}
+	
+	public DataChangeMarker containsSameData(DataBaseStorable storable) {
+		UserInformation compareInfo;
+		try {
+			// If the storable is not even a PictureInformation, it will not be the same.
+			compareInfo = (UserInformation) storable;
+		} catch (Exception e) {
+			return DataChangeMarker.DIFFERENT_TYPE;
+		}
+		
+		if (getUserName().equals(compareInfo.getUserName())) {
+			//return getName().equals(compareInfo.getName()) ? DataChangeMarker.SAME_FILE_KEPT_SAME : DataChangeMarker.SAME_FILE_CHANGED;
+		} else return DataChangeMarker.DIFFERENT_FILE;
+	}
 	
 }

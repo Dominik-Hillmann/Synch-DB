@@ -25,10 +25,9 @@ CREATE TABLE writ_info(
 );
 
 CREATE TABLE users(
-    id          INT NOT NULL AUTO_INCREMENT,
-    pw          VARCHAR(250) NOT NULL,
     name        VARCHAR(250) NOT NULL,
-    PRIMARY KEY (id)
+    pw          VARCHAR(250) NOT NULL,
+    PRIMARY KEY (name)
 );
 
 CREATE TABLE tags(

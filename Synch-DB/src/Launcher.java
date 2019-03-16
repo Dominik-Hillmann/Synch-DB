@@ -44,14 +44,8 @@ public class Launcher {
 	private static final String PIC_STORAGE_DBX = "/img/";
 	
 	public static void main(String[] args) throws Exception {
-		String command1 = "$test = 1;";
-		String command = "php -r 'echo password_hash(\"Das ist ein Test\", PASSWORD_DEFAULT);'";
-		String command2 = "echo Test";
-		Logger.log(Console.execute(command1));
-		Logger.log(Console.execute("echo $test"));
-		// Logger.log(Console.execute("echo \n\n\n"));
-		
-		
+		Logger.log(Console.execute("/home/dominik/Desktop/Encrypt.sh", "Testitestitest"));
+
 		
 		
 		
@@ -157,8 +151,8 @@ public class Launcher {
 				markers.add(picFileSql.containsSameData(picFileDbx));
 			}
 			// Logger.log(markers.size());
-			for (var marker : markers) Logger.log(marker.toString());
-			Logger.log();
+			// for (var marker : markers) Logger.log(marker.toString());
+			// Logger.log();
 			
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)
 				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
@@ -167,6 +161,49 @@ public class Launcher {
 			}
 		}
 				
+		
+		
+		// Updating all information about the users.
+		var userFilesDbx = new ArrayList<UserInformation>();
+		var userFileNames = new ArrayList<String>();
+		try {
+			client.files()
+				.listFolder(USER_DIR)
+				.getEntries()
+				.forEach(file -> userFileNames.add(file.getName()));					
+		} catch (DbxException e) {
+			Logger.log("Did not find directory " + USER_DIR + " in the DBX.");
+		}
+		
+		for (var name : userFileNames) {
+			try {
+				userFilesDbx.add(new UserInformation(name, client));
+			} catch (DbxException | IOException e) {
+				Logger.log("Could not download file named " + name + ".");
+				e.printStackTrace();
+				continue; // Try the next one.
+			} 
+		}
+		
+		// Get the user informations from database.
+		var userFilesSql = new ArrayList<UserInformation>();
+		ResultSet resUserQuery = null;		
+		try {		
+			PreparedStatement userQuery = dbc.prepareStatement("SELECT name, pw FROM db_synchro.users;");
+			resUserQuery = userQuery.executeQuery();
+		} catch (SQLException e) {
+			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
+		}
+		
+		try {
+			while (resUserQuery.next()) {
+				userFilesSql.add(new UserInformation(resUserQuery));
+			}
+		} catch (Exception e) {
+			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
+		}
+		
+		for (var userFile : userFilesSql) userFile.print();
 		
 		/*
 		var userFiles = new ArrayList<UserInformation>();
