@@ -203,6 +203,7 @@ public class Launcher {
 			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
 		}
 		
+		// for (var userFile : userFilesDbx) userFile.storeInDataBase(dbc, client);
 		for (var userFile : userFilesSql) userFile.print();
 		
 		/*

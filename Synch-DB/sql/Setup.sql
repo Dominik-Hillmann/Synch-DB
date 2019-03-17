@@ -39,13 +39,13 @@ CREATE TABLE tags(
 
 -- Tables for n-m relationships. 
 CREATE TABLE user_pics(
-    user_id         INT NOT NULL,
+    user_name       VARCHAR(250) NOT NULL,
     pic_filename    VARCHAR(250) NOT NULL
 );
 
 CREATE TABLE user_writs(
-    user_id     INT NOT NULL,
-    writ_id     VARCHAR(250) NOT NULL
+    user_name   VARCHAR(250) NOT NULL,
+    writ_name   VARCHAR(250) NOT NULL
 );
 
 CREATE TABLE tags_pics(

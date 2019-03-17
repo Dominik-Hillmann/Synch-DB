@@ -2,6 +2,8 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
@@ -37,18 +39,38 @@ public class UserInformation extends Information implements DataBaseStorable {
 	}
 	
 	public UserInformation(ResultSet queryResult) {
+		String username = null;
 		try {
-			this.user = queryResult.getString("name");
+			username = queryResult.getString("name");
+			this.user = username;
 			this.pw = queryResult.getString("pw");
 		} catch (SQLException e) {
 			Logger.log("Konnte Information nicht aus Datenbank retrieven: " + e.getMessage());
-		}		
+		}
+		
+		String picsQuery = "SELECT pic_filename FROM db_synchro.user_pics WHERE user_name='" 
+			+ (username != null ? username : throw new Exception())
+			+ "';"; /**********/S
 	}
 	
 	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {
 		String sqlString = "INSERT INTO db_synchro.users VALUES ("
 			+ "'" + getUserName() + "'" + "," 
 			+ "'" + encrypt(getClearPassword()) + "'" + ");";
+		
+		for (var picFileName : pics) {
+			String additionalPic = "INSERT INTO db_synchro.user_pics VALUES ("
+				+ "'" + getUserName() + "',"
+				+ "'" + picFileName + "');";
+			database.prepareStatement(additionalPic).executeUpdate();
+		}
+		
+		for (var writName : writings) {
+			String additionalWriting = "INSERT INTO db_synchro.user_writs VALUES ("
+				+ "'" + getUserName() + "',"
+				+ "'" + writName + "');";
+			database.prepareStatement(additionalWriting).executeUpdate();
+		}
 		
 		database.prepareStatement(sqlString).executeUpdate();
 	}
@@ -61,6 +83,10 @@ public class UserInformation extends Information implements DataBaseStorable {
 	public void deleteFromDataBase(Connection database) throws SQLException {
 		String sqlString = "DELETE FROM db_synchro.users WHERE name='" + getUserName() + "';";
 		database.prepareStatement(sqlString).executeUpdate();
+		sqlString = "DELETE FROM db_synchro.user_pics WHERE user_name='" + getUserName() + "';";
+		database.prepareStatement(sqlString).executeUpdate();
+		sqlString = "DELETE FROM db_synchro.user_writs WHERE user_name='" + getUserName() + "';";
+		database.prepareStatement(sqlString).executeUpdate();
 	}
 	
 	public String getUserName() {
@@ -71,18 +97,14 @@ public class UserInformation extends Information implements DataBaseStorable {
 		return pw;
 	}
 	
-	public void printAllPicNames() {
-		for (var name : pics) {
-			System.out.println(name);
-		}
+	public ArrayList<String> getPicRessources() {
+		return (ArrayList<String>) Arrays.asList(pics);
 	}
 	
-	public void printAllWritingNames() {
-		for (var writing : writings) {
-			System.out.println(writing);
-		}
+	public ArrayList<String> getWritRessources() {
+		return (ArrayList<String>) Arrays.asList(writings);
 	}
-	
+		
 	public void print() {
 		System.out.println("Password: " + pw);
 		System.out.println("Username: " + user);
@@ -104,8 +126,31 @@ public class UserInformation extends Information implements DataBaseStorable {
 			return DataChangeMarker.DIFFERENT_TYPE;
 		}
 		
+		boolean sameRessources = true;
+		var comparePics = compareInfo.getPicRessources();
+		var compareWrits = compareInfo.getWritRessources();
+		sameRessources = (pics.length != comparePics.size()) || (writings.length != compareWrits.size());
+		
+		if (sameRessources) {
+			for (var picFileName : pics) {
+				if (!comparePics.contains(picFileName)) {
+					sameRessources = false;
+					break;
+				}
+			}			
+			for (var writName : writings) {
+				if (!compareWrits.contains(writName)) {
+					sameRessources = false;
+					break;
+				}
+			}
+		}
+		
 		if (getUserName().equals(compareInfo.getUserName())) {
-			return DataChangeMarker.SAME_FILE_KEPT_SAME;
-		} else return DataChangeMarker.DIFFERENT_FILE;
+			if (sameRessources) {
+				return DataChangeMarker.SAME_FILE_KEPT_SAME;
+			} else return DataChangeMarker.SAME_FILE_CHANGED;
+		} else return DataChangeMarker.DIFFERENT_FILE;		
 	}
+	
 }
