@@ -38,19 +38,48 @@ public class UserInformation extends Information implements DataBaseStorable {
 		writings = userInfo.writings;
 	}
 	
-	public UserInformation(ResultSet queryResult) {
-		String username = null;
+	public UserInformation(String username, String password, Connection database) {
 		try {
-			username = queryResult.getString("name");
+			// First, basic information: name and password.
 			this.user = username;
-			this.pw = queryResult.getString("pw");
+			this.pw = password;
+			
+			Logger.log("TEST"); Logger.log(username); Logger.log(password);
+			
+			if (username == null) throw new SQLException("User name" + username + "not found.");
+			
+			// All filenames associated with this user out of extra query.
+			String picsQuery = "SELECT pic_filename FROM db_synchro.user_pics WHERE user_name='" 
+				+ username + "';";
+			ResultSet picRes = database.prepareStatement(picsQuery).getResultSet();
+			ArrayList<String> picNames = new ArrayList<String>();
+			while (picRes.next()) {
+				
+				// Hier gibt es Probleme mit next(). ***
+				
+				// picNames.add(picRes.getString(1));
+				Logger.log(picRes.getString("pic_filename"));
+			}
+			// this.pics = (String[]) picNames.toArray();
+			
+			
+			for (var name : picNames) Logger.log(name);
+			
+			// All writing names for this user out of extra query.
+			String writsQuery = "SELECT pic_filename FROM db_synchro.user_writs WHERE user_name='"
+				+ username + "';";
+			ResultSet writRes = database.prepareStatement(writsQuery).getResultSet();
+			ArrayList<String> writNames = new ArrayList<String>();
+			while (writRes.next()) {
+				writNames.add(writRes.getString(1));
+			}
+			this.writings = (String[]) writNames.toArray();	
+			
+			for (var name : writNames) Logger.log(name);
+			
 		} catch (SQLException e) {
 			Logger.log("Konnte Information nicht aus Datenbank retrieven: " + e.getMessage());
 		}
-		
-		String picsQuery = "SELECT pic_filename FROM db_synchro.user_pics WHERE user_name='" 
-			+ (username != null ? username : throw new Exception())
-			+ "';"; /**********/S
 	}
 	
 	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {
@@ -108,8 +137,8 @@ public class UserInformation extends Information implements DataBaseStorable {
 	public void print() {
 		System.out.println("Password: " + pw);
 		System.out.println("Username: " + user);
-		System.out.println("Number of pics: " + String.valueOf(pics.length));
-		System.out.println("Number of writings: " + String.valueOf(writings.length));
+		for (var pic : this.pics) System.out.println("Ass. pic: " + pic);
+		for (var writ : this.writings) System.out.println("Ass. writ: " + writ);
 		System.out.println();
 	}
 	

@@ -197,7 +197,13 @@ public class Launcher {
 		
 		try {
 			while (resUserQuery.next()) {
-				userFilesSql.add(new UserInformation(resUserQuery));
+				userFilesSql.add(new UserInformation(
+					resUserQuery.getString("name"),
+					resUserQuery.getString("pw"),
+					dbc
+				));
+				// Logger.log("USERNAME: " + resUserQuery.getString("name"));
+				// Logger.log("PASSWORD: " + resUserQuery.getString("pw"));
 			}
 		} catch (Exception e) {
 			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
@@ -205,6 +211,12 @@ public class Launcher {
 		
 		// for (var userFile : userFilesDbx) userFile.storeInDataBase(dbc, client);
 		for (var userFile : userFilesSql) userFile.print();
+		
+		/* VERGLEICHE AUFGRUND DATACHANGEMARKER */
+		
+		
+		
+		
 		
 		/*
 		var userFiles = new ArrayList<UserInformation>();
