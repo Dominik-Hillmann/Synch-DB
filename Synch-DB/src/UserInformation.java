@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,48 +39,37 @@ public class UserInformation extends Information implements DataBaseStorable {
 		writings = userInfo.writings;
 	}
 	
-	public UserInformation(String username, String password, Connection database) {
-		try {
-			// First, basic information: name and password.
-			this.user = username;
-			this.pw = password;
+	public UserInformation(String username, String password, Connection database) throws SQLException {
+		// First, basic information: name and password.
+		this.user = username;
+		this.pw = password;
 			
-			Logger.log("TEST"); Logger.log(username); Logger.log(password);
-			
-			if (username == null) throw new SQLException("User name" + username + "not found.");
-			
-			// All filenames associated with this user out of extra query.
-			String picsQuery = "SELECT pic_filename FROM db_synchro.user_pics WHERE user_name='" 
-				+ username + "';";
-			ResultSet picRes = database.prepareStatement(picsQuery).getResultSet();
-			ArrayList<String> picNames = new ArrayList<String>();
-			while (picRes.next()) {
-				
-				// Hier gibt es Probleme mit next(). ***
-				
-				// picNames.add(picRes.getString(1));
-				Logger.log(picRes.getString("pic_filename"));
-			}
-			// this.pics = (String[]) picNames.toArray();
-			
-			
-			for (var name : picNames) Logger.log(name);
-			
-			// All writing names for this user out of extra query.
-			String writsQuery = "SELECT pic_filename FROM db_synchro.user_writs WHERE user_name='"
-				+ username + "';";
-			ResultSet writRes = database.prepareStatement(writsQuery).getResultSet();
-			ArrayList<String> writNames = new ArrayList<String>();
-			while (writRes.next()) {
-				writNames.add(writRes.getString(1));
-			}
-			this.writings = (String[]) writNames.toArray();	
-			
-			for (var name : writNames) Logger.log(name);
-			
-		} catch (SQLException e) {
-			Logger.log("Konnte Information nicht aus Datenbank retrieven: " + e.getMessage());
+		if (username == null || password == null) {
+			throw new SQLException("User name" + username + "not found.");
 		}
+			
+		// All filenames associated with this user out of extra query.
+		String picsQuery = "SELECT pic_filename FROM db_synchro.user_pics WHERE user_name='" 
+			+ username + "';";
+		ResultSet picRes = database.prepareStatement(picsQuery).executeQuery();
+		ArrayList<String> picNames = new ArrayList<String>();
+		while (picRes.next()) {
+			picNames.add(picRes.getString(1));
+		}
+			
+		this.pics = Arrays.copyOf(picNames.toArray(), picNames.toArray().length, String[].class);
+			
+			
+		// All writing names for this user out of extra query.
+		String writsQuery = "SELECT writ_name FROM db_synchro.user_writs WHERE user_name='"
+			+ username + "';";
+		ResultSet writRes = database.prepareStatement(writsQuery).executeQuery();
+		ArrayList<String> writNames = new ArrayList<String>();
+		while (writRes.next()) {
+			writNames.add(writRes.getString(1));
+		}
+			
+		this.writings = Arrays.copyOf(writNames.toArray(), writNames.toArray().length, String[].class);
 	}
 	
 	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {
@@ -127,11 +117,11 @@ public class UserInformation extends Information implements DataBaseStorable {
 	}
 	
 	public ArrayList<String> getPicRessources() {
-		return (ArrayList<String>) Arrays.asList(pics);
+		return new ArrayList<String>(Arrays.asList(pics));
 	}
 	
 	public ArrayList<String> getWritRessources() {
-		return (ArrayList<String>) Arrays.asList(writings);
+		return new ArrayList<String>(Arrays.asList(writings));
 	}
 		
 	public void print() {
@@ -158,8 +148,8 @@ public class UserInformation extends Information implements DataBaseStorable {
 		boolean sameRessources = true;
 		var comparePics = compareInfo.getPicRessources();
 		var compareWrits = compareInfo.getWritRessources();
-		sameRessources = (pics.length != comparePics.size()) || (writings.length != compareWrits.size());
-		
+		sameRessources = (pics.length == comparePics.size()) && (writings.length == compareWrits.size());
+
 		if (sameRessources) {
 			for (var picFileName : pics) {
 				if (!comparePics.contains(picFileName)) {
@@ -180,6 +170,10 @@ public class UserInformation extends Information implements DataBaseStorable {
 				return DataChangeMarker.SAME_FILE_KEPT_SAME;
 			} else return DataChangeMarker.SAME_FILE_CHANGED;
 		} else return DataChangeMarker.DIFFERENT_FILE;		
+	}
+	
+	public void changeUserName(String s) {
+		this.user = s;
 	}
 	
 }

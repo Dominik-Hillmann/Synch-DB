@@ -195,24 +195,31 @@ public class Launcher {
 			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
 		}
 		
-		try {
-			while (resUserQuery.next()) {
-				userFilesSql.add(new UserInformation(
-					resUserQuery.getString("name"),
-					resUserQuery.getString("pw"),
-					dbc
-				));
-				// Logger.log("USERNAME: " + resUserQuery.getString("name"));
-				// Logger.log("PASSWORD: " + resUserQuery.getString("pw"));
-			}
-		} catch (Exception e) {
-			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
+		
+		while (resUserQuery.next()) {
+			userFilesSql.add(new UserInformation(
+				resUserQuery.getString("name"),
+				resUserQuery.getString("pw"),
+				dbc
+			));
 		}
 		
 		// for (var userFile : userFilesDbx) userFile.storeInDataBase(dbc, client);
-		for (var userFile : userFilesSql) userFile.print();
+		for (var userFile : userFilesSql) {
+			userFile.print();
+		}
+		// for (var userFile : userFilesSql) userFile.deleteFromDataBase(dbc);
 		
 		/* VERGLEICHE AUFGRUND DATACHANGEMARKER */
+		var user1 = userFilesSql.get(0);
+		var user2 = userFilesSql.get(0);
+		var user3 = userFilesSql.get(1);
+		Logger.log("Same file: " + user1.containsSameData(user1).toString());
+		Logger.log("Different file, same data: " + user1.containsSameData(user2).toString());
+		user2.changeUserName("Lalala");
+		Logger.log(user2.getUserName()); // Probleme mit gleichen Tags
+		Logger.log("Different file, same data, changed username: " + user1.containsSameData(user2).toString());
+		Logger.log("Different data: " + user1.containsSameData(user3).toString());
 		
 		
 		
