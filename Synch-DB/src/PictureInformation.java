@@ -27,7 +27,6 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	private boolean instagram;
 	private boolean twitter;
 	
-	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.GERMAN);
 	private static final Path PIC_FOLDER_LOCAL = Paths.get("/home/dominik/DB-Synch-imgs/");
 	
 	/**
@@ -63,7 +62,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	}
 	
 
-	public PictureInformation(ResultSet queryResult) throws IOException, DbxException {
+	public PictureInformation(ResultSet queryResult) {
 		try {
 			LocalDate date = LocalDate.parse(queryResult.getString("date"), formatter);
 			this.day = date.getDayOfMonth();
@@ -105,7 +104,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		try {
 			savePic(getFileName(), client);
 		} catch (Exception e) {
-			throw new SQLException("Could not find any picture with the same filename. Information was not inserted into database.");
+			throw new SQLException("Could not find any picture with filename " + getFileName() + ". Information was not inserted into database.");
 		}
 		// Not in finally because information is not supposed to be inserted into database.
 		database.prepareStatement(sqlString).executeUpdate();

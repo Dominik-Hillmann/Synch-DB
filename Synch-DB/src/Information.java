@@ -1,6 +1,8 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
@@ -10,6 +12,9 @@ import com.dropbox.core.v2.DbxClientV2;
  */
 
 public abstract class Information {
+	
+	// For date conversion from MySQL queries in all child classes.
+	protected static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.GERMAN);
 	
 	/**
 	 * Gets the JSON file as string as found on the given path.

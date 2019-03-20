@@ -30,13 +30,6 @@ CREATE TABLE users(
     PRIMARY KEY (name)
 );
 
-CREATE TABLE tags(
-    tag_id      INT NOT NULL AUTO_INCREMENT,
-    name        VARCHAR(250) NOT NULL,
-    desription  TEXT NOT NULL,
-    PRIMARY KEY (tag_id)
-);
-
 -- Tables for n-m relationships. 
 CREATE TABLE user_pics(
     user_name       VARCHAR(250) NOT NULL,
@@ -49,11 +42,11 @@ CREATE TABLE user_writs(
 );
 
 CREATE TABLE tags_pics(
-    tag_id          INT NOT NULL,
+    tag_name        VARCHAR(250) NOT NULL,
     pic_filename    VARCHAR(250) NOT NULL
 );
 
 CREATE TABLE tags_writs(
-    tag_id      INT NOT NULL,
+    tag_name    VARCHAR(250) NOT NULL,
     writ_name   VARCHAR(250) NOT NULL
 );

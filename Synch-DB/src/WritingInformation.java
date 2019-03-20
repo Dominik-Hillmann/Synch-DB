@@ -1,6 +1,10 @@
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
@@ -45,6 +49,32 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		this.text = info.text;	
 	}
 	
+	public WritingInformation(ResultSet set, Connection database)  {
+		try {
+			LocalDate date = LocalDate.parse(set.getString("date"), formatter);
+			this.day = date.getDayOfMonth();
+			this.month = date.getMonthValue();
+			this.year = date.getYear();
+			
+			this.name = set.getString("name");
+			this.secret = set.getBoolean("kept_secret");
+			this.text = set.getString("text");
+			
+			// Tags
+			String tagsQuery = "SELECT tag_name FROM db_synchro.tags_writs WHERE writ_name='"
+				+ getName() + "';";
+			ResultSet tagQueryRes = database.prepareStatement(tagsQuery).executeQuery();
+			ArrayList<String> tags = new ArrayList<String>();
+			while (tagQueryRes.next()) {
+				tags.add(tagQueryRes.getString("tag_name"));
+			}			
+			this.tags = Arrays.copyOf(tags.toArray(), tags.toArray().length, String[].class);
+			
+		} catch (Exception e) {
+			Logger.log("Could not retrieve value from query: " + e.getMessage());
+		}
+	}
+	
 	public void print() {
 		System.out.println("Date: " + String.valueOf(day) + "." + String.valueOf(month) + "." + String.valueOf(year));
 		System.out.println("Names: " + name);
@@ -78,6 +108,10 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		if (getUserName().equals(compareInfo.getUserName())) {
 			//return getName().equals(compareInfo.getName()) ? DataChangeMarker.SAME_FILE_KEPT_SAME : DataChangeMarker.SAME_FILE_CHANGED;
 		} else return DataChangeMarker.DIFFERENT_FILE;
+	}
+	
+	public String getName() {
+		return this.name;
 	}
 	
 }

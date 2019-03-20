@@ -44,11 +44,6 @@ public class Launcher {
 	private static final String PIC_STORAGE_DBX = "/img/";
 	
 	public static void main(String[] args) throws Exception {
-		Logger.log(Console.execute("/home/dominik/Desktop/Encrypt.sh", "Testitestitest"));
-
-		
-		
-		
 		Connection dbc = getConnection();
 	
 		// First try to import and use the Dropbox library properly.
@@ -143,7 +138,6 @@ public class Launcher {
 		} catch (Exception e) {
 			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
 		}
-		// *******
 		
 		for (var picFileSql : picFilesSql) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
@@ -195,32 +189,59 @@ public class Launcher {
 			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
 		}
 		
+		while (resUserQuery.next()) {
+			userFilesSql.add(new UserInformation(resUserQuery, dbc));
+		}
+				
+		// Vergleich aus Sicht der DBX mit SQL
+		for (var userFileDbx : userFilesDbx) {
+			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
+			
+			for (var userFileSql : userFilesSql) {
+				markers.add(userFileDbx.containsSameData(userFileSql));
+			}
+			
+			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME) 
+				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				userFileDbx.storeInDataBase(dbc, client);
+			} else if (markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				userFileDbx.updateDataBase(dbc, client);
+			} else if (markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)) {
+				Logger.log("skipped");
+				continue;
+			} else {
+				for (var marker : markers) Logger.log(marker.toString());
+				throw new Exception("Did not anticipate this marker structure");
+			}
+		}
+		
+		// Vergleich aus Sicht SQL mit DBX
+		// Query anew because might be changed.
+		userFilesSql.clear();
+		resUserQuery = null;
+		try {		
+			PreparedStatement userQuery = dbc.prepareStatement("SELECT name, pw FROM db_synchro.users;");
+			resUserQuery = userQuery.executeQuery();
+		} catch (SQLException e) {
+			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
+		}
 		
 		while (resUserQuery.next()) {
-			userFilesSql.add(new UserInformation(
-				resUserQuery.getString("name"),
-				resUserQuery.getString("pw"),
-				dbc
-			));
+			userFilesSql.add(new UserInformation(resUserQuery, dbc));
 		}
 		
-		// for (var userFile : userFilesDbx) userFile.storeInDataBase(dbc, client);
-		for (var userFile : userFilesSql) {
-			userFile.print();
+		for (var userFileSql : userFilesSql) {
+			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
+			for (var userFileDbx : userFilesDbx) {
+				markers.add(userFileSql.containsSameData(userFileDbx));
+			}
+			
+			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)
+				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				userFileSql.deleteFromDataBase(dbc);
+				Logger.log("Would delete " + userFileSql.getUserName());
+			}
 		}
-		// for (var userFile : userFilesSql) userFile.deleteFromDataBase(dbc);
-		
-		/* VERGLEICHE AUFGRUND DATACHANGEMARKER */
-		var user1 = userFilesSql.get(0);
-		var user2 = userFilesSql.get(0);
-		var user3 = userFilesSql.get(1);
-		Logger.log("Same file: " + user1.containsSameData(user1).toString());
-		Logger.log("Different file, same data: " + user1.containsSameData(user2).toString());
-		user2.changeUserName("Lalala");
-		Logger.log(user2.getUserName()); // Probleme mit gleichen Tags
-		Logger.log("Different file, same data, changed username: " + user1.containsSameData(user2).toString());
-		Logger.log("Different data: " + user1.containsSameData(user3).toString());
-		
 		
 		
 		

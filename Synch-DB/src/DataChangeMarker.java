@@ -7,10 +7,10 @@ public enum DataChangeMarker {
 	
 	public String toString() {
 		switch (this) {
-			case DIFFERENT_TYPE: return "different type";
-			case DIFFERENT_FILE: return "different file";
-			case SAME_FILE_CHANGED: return "same file but some data changed";
-			default: return "same file, nothing is different";
+			case DIFFERENT_TYPE: return "DIFFERENT_TYPE";
+			case DIFFERENT_FILE: return "DIFFERENT_FILE";
+			case SAME_FILE_CHANGED: return "SAME_FILE_CHANGED";
+			default: return "SAME_FILE_KEPT_SAME";
 		}
 	}
 }

@@ -5,6 +5,7 @@ public class Console {
 	
 	public static String execute(String scriptPath, String clearPassword) {
 		// Not my solution, source: https://stackoverflow.com/questions/26830617/running-bash-commands-in-java
+		
 		StringBuffer output = new StringBuffer();
 	    Process p;
     	

@@ -39,8 +39,10 @@ public class UserInformation extends Information implements DataBaseStorable {
 		writings = userInfo.writings;
 	}
 	
-	public UserInformation(String username, String password, Connection database) throws SQLException {
+	public UserInformation(/*String username, String password*/ ResultSet set, Connection database) throws SQLException {
 		// First, basic information: name and password.
+		String username = set.getString("name");
+		String password = set.getString("pw");
 		this.user = username;
 		this.pw = password;
 			
@@ -165,6 +167,11 @@ public class UserInformation extends Information implements DataBaseStorable {
 			}
 		}
 		
+		Logger.log();
+		Logger.log("Vergleich Namen: " + getUserName().equals(compareInfo.getUserName())
+			+ " " + getUserName() + " " + compareInfo.getUserName());
+		Logger.log("Vergleich Ressis: " + sameRessources);
+		
 		if (getUserName().equals(compareInfo.getUserName())) {
 			if (sameRessources) {
 				return DataChangeMarker.SAME_FILE_KEPT_SAME;
@@ -174,6 +181,13 @@ public class UserInformation extends Information implements DataBaseStorable {
 	
 	public void changeUserName(String s) {
 		this.user = s;
+	}
+	
+	public void changePics() {
+		String[] oldPics = this.pics;
+		String[] newPics = new String[oldPics.length + 1];
+		newPics[oldPics.length] = "test";
+		this.pics = newPics;
 	}
 	
 }
