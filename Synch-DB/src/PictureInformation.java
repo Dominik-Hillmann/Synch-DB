@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 
 import com.dropbox.core.DbxException;
@@ -26,6 +27,8 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	private String description;
 	private boolean instagram;
 	private boolean twitter;
+	
+	private String[] tags;
 	
 	private static final Path PIC_FOLDER_LOCAL = Paths.get("/home/dominik/DB-Synch-imgs/");
 	
@@ -57,12 +60,13 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		this.description = info.description;
 		this.instagram = info.instagram;
 		this.twitter = info.twitter;
+		this.tags = info.tags;
 		
 		// TODO auch noch das Bild an sich speichern
 	}
 	
 
-	public PictureInformation(ResultSet queryResult) {
+	public PictureInformation(ResultSet queryResult, Connection database) {
 		try {
 			LocalDate date = LocalDate.parse(queryResult.getString("date"), formatter);
 			this.day = date.getDayOfMonth();
@@ -76,6 +80,17 @@ public class PictureInformation extends Information implements DataBaseStorable 
 			this.secret = queryResult.getBoolean("kept_secret");
 			this.instagram = queryResult.getBoolean("insta_posted");
 			this.twitter = queryResult.getBoolean("twitter_posted");
+			
+			String tagsQuery = "SELECT tag_name FROM db_synchro.tags_pics WHERE pic_filename = '"
+					+ getFileName() + "';";
+			ResultSet tagQueryRes = database.prepareStatement(tagsQuery).executeQuery();
+			ArrayList<String> tags = new ArrayList<String>();
+			while (tagQueryRes.next()) {
+				tags.add(tagQueryRes.getString("tag_name"));
+			}
+
+			this.tags = Arrays.copyOf(tags.toArray(), tags.toArray().length, String[].class);
+				
 		} catch (SQLException e) {
 			Logger.log("Konnte nicht retrieven: " + e.getMessage());
 		}
@@ -101,6 +116,13 @@ public class PictureInformation extends Information implements DataBaseStorable 
 			+ "b'" + (postedToTwitter() ? 1 : 0) + "'" + ","
 			+ "b'" + (postedToInsta() ? 1 : 0) + "'" + ");";
 		
+		for (var tag : this.tags) {
+			String newTagSql = "INSERT INTO db_synchro.tags_pics VALUES ("
+				+ "'" + tag + "',"
+				+ "'" + getFileName() + "');";
+			database.prepareStatement(newTagSql).executeUpdate();
+		}
+		
 		try {
 			savePic(getFileName(), client);
 		} catch (Exception e) {
@@ -118,6 +140,9 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	public void deleteFromDataBase(Connection database) throws SQLException {
 		String sqlString = "DELETE FROM db_synchro.pic_info WHERE filename='" + getFileName() + "';";
 		database.prepareStatement(sqlString).executeUpdate();
+		String sqlTags = "DELETE FROM db_synchro.pic_info WHERE "
+			+ "pic_filename = '" + getFileName() + "';";
+		database.prepareStatement(sqlTags).executeUpdate();
 	}
 
 	public String getFileName() {

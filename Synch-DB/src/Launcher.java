@@ -90,14 +90,14 @@ public class Launcher {
 		
 		try {
 			while (resPicQuery.next()) {
-				picFilesSql.add(new PictureInformation(resPicQuery));
+				picFilesSql.add(new PictureInformation(resPicQuery, dbc));
 			}
 		} catch (Exception e) {
 			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
 		}
 		
 		
-		for (PictureInformation picFileDbx : picFilesDbx) {
+		for (var picFileDbx : picFilesDbx) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			
 			for (PictureInformation picFileSql : picFilesSql) {
@@ -133,7 +133,7 @@ public class Launcher {
 		
 		try {
 			while (resPicQuery.next()) {
-				picFilesSql.add(new PictureInformation(resPicQuery));
+				picFilesSql.add(new PictureInformation(resPicQuery, dbc));
 			}
 		} catch (Exception e) {
 			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
@@ -243,6 +243,33 @@ public class Launcher {
 			}
 		}
 		
+		
+		// Writings
+		var writFilesDbx = new ArrayList<WritingInformation>();
+		var writFileNames = new ArrayList<String>();
+		// Zuerst die Names der Dateien, dann in den Konstruktoren die eigentlichen Dateien herunterladen.
+		try {
+			client.files()
+				.listFolder(WRIT_DIR)
+				.getEntries()
+				.forEach(file -> writFileNames.add(file.getName()));					
+		} catch (DbxException e) {
+			Logger.log("Did not find directory " + WRIT_DIR + " in the DBX.");
+		}
+		
+		for (var name : writFileNames) {
+			try {
+				writFilesDbx.add(new WritingInformation(name, client));
+			} catch (DbxException | IOException e) {
+				Logger.log("Could not download file named " + name + ".");
+				e.printStackTrace();
+				continue; // Try the next one.
+			} 
+		}
+		
+		// for (var writ : writFilesDbx) writ.storeInDataBase(dbc, client);
+		
+		// SQL Writings
 		
 		
 		
@@ -457,4 +484,10 @@ public class Launcher {
  * den Log wieder in die DB laden, um Fehler sehen zu können
  * SQL-Files, um Datenbank wieder auf Raspi herstellen zu können.
  * Fotos auf der Hauptseite über DBX bestimmen.
+ */
+/**
+ * TODO
+ * Writing-Info Schema
+ * Download der Bilder in PictureInformation.storeToDataBase integrieren
+ * Zusammenfassende Funktionen für wiederkehrende Abläufe, wie Download, etc
  */

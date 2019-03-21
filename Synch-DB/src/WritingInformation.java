@@ -18,6 +18,8 @@ public class WritingInformation extends Information implements DataBaseStorable 
 	private int year;
 	private String name;
 	private boolean secret;
+	private boolean twitter;
+	private boolean instagram;
 	private String[] tags;
 	private String text;
 	
@@ -45,8 +47,10 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		this.year = info.year;
 		this.name = info.name;
 		this.secret = info.secret;
+		this.twitter = info.twitter;
+		this.instagram = info.instagram;
 		this.tags = info.tags;
-		this.text = info.text;	
+		this.text = info.text;
 	}
 	
 	public WritingInformation(ResultSet set, Connection database)  {
@@ -58,6 +62,8 @@ public class WritingInformation extends Information implements DataBaseStorable 
 			
 			this.name = set.getString("name");
 			this.secret = set.getBoolean("kept_secret");
+			this.twitter = set.getBoolean("twitter_posted");
+			this.instagram = set.getBoolean("insta_posted");
 			this.text = set.getString("text");
 			
 			// Tags
@@ -75,25 +81,45 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		}
 	}
 	
-	public void print() {
+	public void print( ) {
 		System.out.println("Date: " + String.valueOf(day) + "." + String.valueOf(month) + "." + String.valueOf(year));
 		System.out.println("Names: " + name);
-		for (String tag : tags) System.out.println(tag);
+		for (var tag : tags) System.out.println(tag);
 		System.out.println("Number of tags: " + String.valueOf(tags.length));
 		System.out.println(text + "\n");
 	}
-	
+
 	// placeholder
 	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {
+		String sqlString = "INSERT INTO db_synchro.writ_info VALUES ("
+			+ "'" + getName() + "'," 
+			+ "'" + getDateStr() + "',"
+			+ "b'" + (isSecret() ? 1 : 0) + "',"
+			+ "b'" + (postedToTwitter() ? 1 : 0) + "',"
+			+ "b'" + (postedToInstagram() ? 1 : 0) + "',"
+			+ "'" + getText() + "');";
+		database.prepareStatement(sqlString).executeUpdate();
 		
+		for (var tag : this.tags) {
+			String newTagSql = "INSERT INTO db_synchro.tags_writs VALUES ("
+				+ "'" + tag + "',"
+				+ "'" + getName() + "');";
+			database.prepareStatement(newTagSql).executeUpdate();
+		}
 	}
 
 	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException {
-		
+		deleteFromDataBase(database);
+		storeInDataBase(database, client);
 	}
 	
 	public void deleteFromDataBase(Connection database) throws SQLException {
-		
+		String sqlMain = "DELETE FROM db_synchro.writ_info WHERE "
+			+ "name = '" + getName() + "';";
+		database.prepareStatement(sqlMain).executeUpdate();
+		String sqlTags = "DELETE FROM db_synchro.writ_info WHERE "
+			+ "name = '" + getName() + "';";
+		database.prepareStatement(sqlTags).executeUpdate();
 	}
 	
 	public DataChangeMarker containsSameData(DataBaseStorable storable) {
@@ -112,6 +138,29 @@ public class WritingInformation extends Information implements DataBaseStorable 
 	
 	public String getName() {
 		return this.name;
+	}
+	
+	public String getDateStr() {
+		String dayStr = String.valueOf(day);
+		String monthStr = String.valueOf(month);
+		String yearStr = String.valueOf(year);
+		return yearStr + "-" + monthStr + "-" + dayStr;
+	}
+	
+	public boolean isSecret() {
+		return this.secret;
+	}
+	
+	public boolean postedToTwitter() {
+		return this.twitter;
+	}
+	
+	public boolean postedToInstagram() {
+		return this.instagram;
+	}
+	
+	public String getText() {
+		return this.text;
 	}
 	
 }

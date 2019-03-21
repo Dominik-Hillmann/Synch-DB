@@ -45,8 +45,11 @@ CREATE TABLE tags_pics(
     tag_name        VARCHAR(250) NOT NULL,
     pic_filename    VARCHAR(250) NOT NULL
 );
+ALTER TABLE tags_pics ADD UNIQUE (tag_name, pic_filename);
 
 CREATE TABLE tags_writs(
     tag_name    VARCHAR(250) NOT NULL,
     writ_name   VARCHAR(250) NOT NULL
 );
+ALTER TABLE tags_writs ADD UNIQUE (tag_name, writ_name); -- nur einzigarte Kombination der beiden Spalte zulässig
+
