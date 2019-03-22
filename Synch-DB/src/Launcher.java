@@ -267,9 +267,26 @@ public class Launcher {
 			} 
 		}
 		
-		// for (var writ : writFilesDbx) writ.storeInDataBase(dbc, client);
+		// Get the writing informations from database.
+		var writFilesSql = new ArrayList<WritingInformation>();
+		ResultSet resWritQuery = null;		
+		try {		
+			PreparedStatement writQuery = dbc.prepareStatement(
+				"SELECT name, date, kept_secret, twitter_posted, insta_posted, text FROM db_synchro.writ_info;"
+			);
+			resWritQuery = writQuery.executeQuery();
+		} catch (SQLException e) {
+			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
+		}
 		
-		// SQL Writings
+		while (resWritQuery.next()) {
+			writFilesSql.add(new WritingInformation(resWritQuery, dbc));
+		}
+		
+		Logger.log("SQL writings: ");
+		for (var writ : writFilesSql) writ.print();
+		
+		// ***** Does comparison of writings work as intended? *****
 		
 		
 		
@@ -487,6 +504,7 @@ public class Launcher {
  */
 /**
  * TODO
+ * Does comparison of writings work as intended?
  * Writing-Info Schema
  * Download der Bilder in PictureInformation.storeToDataBase integrieren
  * Zusammenfassende Funktionen für wiederkehrende Abläufe, wie Download, etc

@@ -81,7 +81,7 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		}
 	}
 	
-	public void print( ) {
+	public void print() {
 		System.out.println("Date: " + String.valueOf(day) + "." + String.valueOf(month) + "." + String.valueOf(year));
 		System.out.println("Names: " + name);
 		for (var tag : tags) System.out.println(tag);
@@ -123,16 +123,24 @@ public class WritingInformation extends Information implements DataBaseStorable 
 	}
 	
 	public DataChangeMarker containsSameData(DataBaseStorable storable) {
-		UserInformation compareInfo;
+		WritingInformation compareInfo;
 		try {
-			// If the storable is not even a PictureInformation, it will not be the same.
-			compareInfo = (UserInformation) storable;
+			// If the storable is not even a WritingInformation, it will not be the same.
+			compareInfo = (WritingInformation) storable;
 		} catch (Exception e) {
 			return DataChangeMarker.DIFFERENT_TYPE;
 		}
 		
-		if (getUserName().equals(compareInfo.getUserName())) {
-			//return getName().equals(compareInfo.getName()) ? DataChangeMarker.SAME_FILE_KEPT_SAME : DataChangeMarker.SAME_FILE_CHANGED;
+		// Do they have the same primary key?
+		if (getName().equals(compareInfo.getName())) {
+			// Are all other attributes the same, if they have the same primary key?
+			if (getDateStr().equals(compareInfo.getDateStr())
+				&& isSecret() == compareInfo.isSecret()
+				&& postedToTwitter() == compareInfo.postedToTwitter()
+				&& postedToInstagram() == compareInfo.postedToInstagram()
+				&& getText().equals(compareInfo.getText())) {
+				return DataChangeMarker.SAME_FILE_KEPT_SAME;
+			} else return DataChangeMarker.SAME_FILE_CHANGED;
 		} else return DataChangeMarker.DIFFERENT_FILE;
 	}
 	

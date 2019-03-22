@@ -37,7 +37,7 @@ public class UserInformation extends Information implements DataBaseStorable {
 		user = userInfo.user;
 		pics = userInfo.pics;
 		writings = userInfo.writings;
-	}
+	} // Constructor
 	
 	public UserInformation(/*String username, String password*/ ResultSet set, Connection database) throws SQLException {
 		// First, basic information: name and password.
@@ -72,7 +72,7 @@ public class UserInformation extends Information implements DataBaseStorable {
 		}
 			
 		this.writings = Arrays.copyOf(writNames.toArray(), writNames.toArray().length, String[].class);
-	}
+	} // Contructor
 	
 	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {
 		String sqlString = "INSERT INTO db_synchro.users VALUES ("
@@ -84,22 +84,22 @@ public class UserInformation extends Information implements DataBaseStorable {
 				+ "'" + getUserName() + "',"
 				+ "'" + picFileName + "');";
 			database.prepareStatement(additionalPic).executeUpdate();
-		}
+		} // for
 		
 		for (var writName : writings) {
 			String additionalWriting = "INSERT INTO db_synchro.user_writs VALUES ("
 				+ "'" + getUserName() + "',"
 				+ "'" + writName + "');";
 			database.prepareStatement(additionalWriting).executeUpdate();
-		}
+		} // for
 		
 		database.prepareStatement(sqlString).executeUpdate();
-	}
+	} // storeInDataBase
 
 	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException {
 		deleteFromDataBase(database);
 		storeInDataBase(database, client);
-	}
+	} // updateFromDataBase
 	
 	public void deleteFromDataBase(Connection database) throws SQLException {
 		String sqlString = "DELETE FROM db_synchro.users WHERE name='" + getUserName() + "';";
@@ -108,23 +108,23 @@ public class UserInformation extends Information implements DataBaseStorable {
 		database.prepareStatement(sqlString).executeUpdate();
 		sqlString = "DELETE FROM db_synchro.user_writs WHERE user_name='" + getUserName() + "';";
 		database.prepareStatement(sqlString).executeUpdate();
-	}
+	} // deleteFromDatabase
 	
 	public String getUserName() {
 		return user;
-	}
+	} // getUserName
 	
 	private String getClearPassword() {
 		return pw;
-	}
+	} // getClearPassword
 	
 	public ArrayList<String> getPicRessources() {
 		return new ArrayList<String>(Arrays.asList(pics));
-	}
+	} // getPicRessources
 	
 	public ArrayList<String> getWritRessources() {
 		return new ArrayList<String>(Arrays.asList(writings));
-	}
+	} // getWritRessources
 		
 	public void print() {
 		System.out.println("Password: " + pw);
@@ -132,11 +132,11 @@ public class UserInformation extends Information implements DataBaseStorable {
 		for (var pic : this.pics) System.out.println("Ass. pic: " + pic);
 		for (var writ : this.writings) System.out.println("Ass. writ: " + writ);
 		System.out.println();
-	}
+	} // print
 	
 	private static String encrypt(String clearPassword) { 
 		return Console.execute(ENC_SCRIPT, clearPassword); 
-	}
+	} // encrypt
 	
 	public DataChangeMarker containsSameData(DataBaseStorable storable) {
 		UserInformation compareInfo;
@@ -145,7 +145,7 @@ public class UserInformation extends Information implements DataBaseStorable {
 			compareInfo = (UserInformation) storable;
 		} catch (Exception e) {
 			return DataChangeMarker.DIFFERENT_TYPE;
-		}
+		} // try
 		
 		boolean sameRessources = true;
 		var comparePics = compareInfo.getPicRessources();
@@ -157,15 +157,15 @@ public class UserInformation extends Information implements DataBaseStorable {
 				if (!comparePics.contains(picFileName)) {
 					sameRessources = false;
 					break;
-				}
-			}			
+				} // if
+			} // for
 			for (var writName : writings) {
 				if (!compareWrits.contains(writName)) {
 					sameRessources = false;
 					break;
-				}
-			}
-		}
+				} // if
+			} // for
+		} // if
 		
 		Logger.log();
 		Logger.log("Vergleich Namen: " + getUserName().equals(compareInfo.getUserName())
@@ -177,17 +177,6 @@ public class UserInformation extends Information implements DataBaseStorable {
 				return DataChangeMarker.SAME_FILE_KEPT_SAME;
 			} else return DataChangeMarker.SAME_FILE_CHANGED;
 		} else return DataChangeMarker.DIFFERENT_FILE;		
-	}
+	} // containsSameData
 	
-	public void changeUserName(String s) {
-		this.user = s;
-	}
-	
-	public void changePics() {
-		String[] oldPics = this.pics;
-		String[] newPics = new String[oldPics.length + 1];
-		newPics[oldPics.length] = "test";
-		this.pics = newPics;
-	}
-	
-}
+} // UserInformation
