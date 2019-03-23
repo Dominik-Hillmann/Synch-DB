@@ -287,7 +287,56 @@ public class Launcher {
 		for (var writ : writFilesSql) writ.print();
 		
 		// ***** Does comparison of writings work as intended? *****
+		// Look at DBX files first.
+		for (var writFileDbx : writFilesDbx) {
+			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
+			
+			for (var writFileSql : writFilesSql) {
+				markers.add(writFileDbx.containsSameData(writFileSql));
+			}
+			
+			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME) 
+				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				writFileDbx.storeInDataBase(dbc, client);
+			} else if (markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				writFileDbx.updateDataBase(dbc, client);
+			} else if (markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)) {
+				Logger.log("skipped");
+				continue;
+			} else {
+				for (var marker : markers) Logger.log(marker.toString());
+				throw new Exception("Did not anticipate this marker structure");
+			}
+		}
 		
+		// Look at SQL files first.
+		writFilesSql.clear();
+		resWritQuery = null;
+		try {		
+			PreparedStatement writQuery = dbc.prepareStatement(
+				"SELECT name, date, kept_secret, twitter_posted, insta_posted, text FROM db_synchro.writ_info;"
+			);
+			resWritQuery = writQuery.executeQuery();
+		} catch (SQLException e) {
+			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
+		}
+		
+		while (resWritQuery.next()) {
+			writFilesSql.add(new WritingInformation(resWritQuery, dbc));
+		}
+		
+		for (var writFileSql : writFilesSql) {
+			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
+			for (var writFileDbx : writFilesDbx) {
+				markers.add(writFileSql.containsSameData(writFileDbx));
+			}
+			
+			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)
+				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				writFileSql.deleteFromDataBase(dbc);
+				Logger.log("Would delete " + writFileSql.getName());
+			}
+		}
 		
 		
 		/*

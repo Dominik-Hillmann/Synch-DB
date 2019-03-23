@@ -104,9 +104,13 @@ public class WritingInformation extends Information implements DataBaseStorable 
 			String newTagSql = "INSERT INTO db_synchro.tags_writs VALUES ("
 				+ "'" + tag + "',"
 				+ "'" + getName() + "');";
-			database.prepareStatement(newTagSql).executeUpdate();
-		}
-	}
+			try {
+				database.prepareStatement(newTagSql).executeUpdate();
+			} catch (SQLException e) {
+				continue;
+			} // try			
+		} // for
+	} // storeInDataBase
 
 	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException {
 		deleteFromDataBase(database);
