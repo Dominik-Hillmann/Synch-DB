@@ -3,13 +3,15 @@ import java.io.InputStreamReader;
 
 public class Console {
 	
-	public static String execute(String scriptPath, String clearPassword) {
+	private static final String ENC_SCRIPT = "/home/dominik/Desktop/Encrypt.sh";
+	
+	public static String execute(String clearPassword) {
 		// Not my solution, source: https://stackoverflow.com/questions/26830617/running-bash-commands-in-java
 		
 		StringBuffer output = new StringBuffer();
 	    Process p;
     	
-    	String[] commands = { scriptPath, clearPassword };
+    	String[] commands = { ENC_SCRIPT, clearPassword };
 	    try {
 	    	p = Runtime.getRuntime().exec(commands);
 	    	p.waitFor();

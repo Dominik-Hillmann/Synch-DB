@@ -120,7 +120,12 @@ public class PictureInformation extends Information implements DataBaseStorable 
 			String newTagSql = "INSERT INTO db_synchro.tags_pics VALUES ("
 				+ "'" + tag + "',"
 				+ "'" + getFileName() + "');";
-			database.prepareStatement(newTagSql).executeUpdate();
+			try {
+				database.prepareStatement(newTagSql).executeUpdate();
+			} catch (SQLException e) {
+				// Skip in case of a duplicate entry.
+				continue;
+			}			
 		}
 		
 		try {
@@ -140,7 +145,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	public void deleteFromDataBase(Connection database) throws SQLException {
 		String sqlString = "DELETE FROM db_synchro.pic_info WHERE filename='" + getFileName() + "';";
 		database.prepareStatement(sqlString).executeUpdate();
-		String sqlTags = "DELETE FROM db_synchro.pic_info WHERE "
+		String sqlTags = "DELETE FROM db_synchro.tags_pics WHERE "
 			+ "pic_filename = '" + getFileName() + "';";
 		database.prepareStatement(sqlTags).executeUpdate();
 	}
@@ -176,6 +181,10 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		return instagram;
 	}
 	
+	public ArrayList<String> getTags() {
+		return new ArrayList<String>(Arrays.asList(tags));
+	}
+	
 	public DataChangeMarker containsSameData(DataBaseStorable storable) {
 		PictureInformation compareInfo;
 		try {
@@ -185,25 +194,28 @@ public class PictureInformation extends Information implements DataBaseStorable 
 			return DataChangeMarker.DIFFERENT_TYPE;
 		}
 		
+		var compareTags = compareInfo.getTags();
+		boolean sameTags = tags.length == compareTags.size();
+
+		if (sameTags) {
+			for (var tag : tags) {
+				if (!compareTags.contains(tag)) {
+					sameTags = false;
+					break;
+				} // if
+			} // for
+		} // if
+		
 		if (getFileName().equals(compareInfo.getFileName())) {
 			return getName().equals(compareInfo.getName())
 				&& getDateStr().equals(compareInfo.getDateStr())
 				&& getDescription().equals(compareInfo.getDescription())
 				&& isSecret() == compareInfo.isSecret()
 				&& postedToTwitter() == compareInfo.postedToTwitter()
-				&& postedToInsta() == compareInfo.postedToInsta() 
+				&& postedToInsta() == compareInfo.postedToInsta()
+				&& sameTags
 				? DataChangeMarker.SAME_FILE_KEPT_SAME : DataChangeMarker.SAME_FILE_CHANGED;
 		} else return DataChangeMarker.DIFFERENT_FILE;
 	}
-	/*
-	public boolean containsElementWithSameData(ArrayList<DataBaseStorable> arr, Connection database) throws SQLException {
-		boolean containsElementWithSameData = false;
-		for (DataBaseStorable info : arr) {
-			if (containsSameData(info, database)) {
-				return true;
-			} else continue;
-		}
-		return false;
-	}
-	*/
+	
 }

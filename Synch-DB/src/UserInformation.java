@@ -19,7 +19,6 @@ public class UserInformation extends Information implements DataBaseStorable {
 	private String user;
 	private String[] pics;
 	private String[] writings;
-	private static final String ENC_SCRIPT = "/home/dominik/Desktop/Encrypt.sh";
 	
 	/**
 	 * To have the extraction of information out of the JSON all wrapped up in the constructor.
@@ -47,7 +46,7 @@ public class UserInformation extends Information implements DataBaseStorable {
 		this.pw = password;
 			
 		if (username == null || password == null) {
-			throw new SQLException("User name" + username + "not found.");
+			throw new SQLException("User name " + username + " not found.");
 		}
 			
 		// All filenames associated with this user out of extra query.
@@ -135,7 +134,7 @@ public class UserInformation extends Information implements DataBaseStorable {
 	} // print
 	
 	private static String encrypt(String clearPassword) { 
-		return Console.execute(ENC_SCRIPT, clearPassword); 
+		return Console.execute(clearPassword); 
 	} // encrypt
 	
 	public DataChangeMarker containsSameData(DataBaseStorable storable) {
@@ -147,21 +146,21 @@ public class UserInformation extends Information implements DataBaseStorable {
 			return DataChangeMarker.DIFFERENT_TYPE;
 		} // try
 		
-		boolean sameRessources = true;
+		boolean sameResources = true;
 		var comparePics = compareInfo.getPicRessources();
 		var compareWrits = compareInfo.getWritRessources();
-		sameRessources = (pics.length == comparePics.size()) && (writings.length == compareWrits.size());
+		sameResources = (pics.length == comparePics.size()) && (writings.length == compareWrits.size());
 
-		if (sameRessources) {
+		if (sameResources) {
 			for (var picFileName : pics) {
 				if (!comparePics.contains(picFileName)) {
-					sameRessources = false;
+					sameResources = false;
 					break;
 				} // if
 			} // for
 			for (var writName : writings) {
 				if (!compareWrits.contains(writName)) {
-					sameRessources = false;
+					sameResources = false;
 					break;
 				} // if
 			} // for
@@ -170,10 +169,10 @@ public class UserInformation extends Information implements DataBaseStorable {
 		Logger.log();
 		Logger.log("Vergleich Namen: " + getUserName().equals(compareInfo.getUserName())
 			+ " " + getUserName() + " " + compareInfo.getUserName());
-		Logger.log("Vergleich Ressis: " + sameRessources);
+		Logger.log("Vergleich Ressis: " + sameResources);
 		
 		if (getUserName().equals(compareInfo.getUserName())) {
-			if (sameRessources) {
+			if (sameResources) {
 				return DataChangeMarker.SAME_FILE_KEPT_SAME;
 			} else return DataChangeMarker.SAME_FILE_CHANGED;
 		} else return DataChangeMarker.DIFFERENT_FILE;		

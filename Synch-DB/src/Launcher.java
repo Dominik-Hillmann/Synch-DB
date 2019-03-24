@@ -54,7 +54,7 @@ public class Launcher {
 		// Vergleich der Picture-Information:
 		// Schritt 1.1: alle Information aus pic_info-Ordner in ArrayList.
 		var picFilesDbx = new ArrayList<PictureInformation>();
-		var picFileNames = new ArrayList<String>();
+		/*var picFileNames = new ArrayList<String>();
 		// Zuerst die Names der Dateien, dann in den Konstruktoren die eigentlichen Dateien herunterladen.
 		try {
 			client.files()
@@ -73,11 +73,12 @@ public class Launcher {
 				e.printStackTrace();
 				continue; // Try the next one.
 			} 
-		}
+		}*/
+		picFilesDbx = getPicListDbx(PIC_DIR, client);
 		
 		// Schritt 1.2: alle Information aus pic_infos in der MySQL-DB in eine ArrayList.
 		var picFilesSql = new ArrayList<PictureInformation>();
-		ResultSet resPicQuery = null;		
+		/*ResultSet resPicQuery = null;		
 		try {		
 			PreparedStatement picQuery = dbc.prepareStatement(
 				"SELECT filename, name, date, explanation, kept_secret," 
@@ -86,7 +87,7 @@ public class Launcher {
 			resPicQuery = picQuery.executeQuery();
 		} catch (SQLException e) {
 			Logger.log("Die Query für die Bildinformationen konnte nicht ausgeführt werden: " + e.getMessage());
-		}
+		}		
 		
 		try {
 			while (resPicQuery.next()) {
@@ -94,13 +95,14 @@ public class Launcher {
 			}
 		} catch (Exception e) {
 			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
-		}
+		}*/
+		picFilesSql = getPicListSql("pic_info", dbc);
 		
 		
 		for (var picFileDbx : picFilesDbx) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			
-			for (PictureInformation picFileSql : picFilesSql) {
+			for (var picFileSql : picFilesSql) {
 				markers.add(picFileDbx.containsSameData(picFileSql));
 			}
 			
@@ -120,7 +122,8 @@ public class Launcher {
 		// picFilesSql neu, da Information nun outdated
 		// *******
 		picFilesSql.clear();
-		resPicQuery = null;		
+		picFilesSql = getPicListSql("pic_info", dbc);
+		/*ResultSet resPicQuery = null;		
 		try {		
 			PreparedStatement picQuery = dbc.prepareStatement(
 				"SELECT filename, name, date, explanation, kept_secret," 
@@ -137,16 +140,13 @@ public class Launcher {
 			}
 		} catch (Exception e) {
 			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
-		}
+		}*/
 		
 		for (var picFileSql : picFilesSql) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			for (var picFileDbx : picFilesDbx) {
 				markers.add(picFileSql.containsSameData(picFileDbx));
 			}
-			// Logger.log(markers.size());
-			// for (var marker : markers) Logger.log(marker.toString());
-			// Logger.log();
 			
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)
 				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
@@ -158,8 +158,8 @@ public class Launcher {
 		
 		
 		// Updating all information about the users.
-		var userFilesDbx = new ArrayList<UserInformation>();
-		var userFileNames = new ArrayList<String>();
+		var userFilesDbx = getUserListDbx(USER_DIR, client);
+		/*var userFileNames = new ArrayList<String>();
 		try {
 			client.files()
 				.listFolder(USER_DIR)
@@ -177,11 +177,11 @@ public class Launcher {
 				e.printStackTrace();
 				continue; // Try the next one.
 			} 
-		}
+		}*/
 		
 		// Get the user informations from database.
-		var userFilesSql = new ArrayList<UserInformation>();
-		ResultSet resUserQuery = null;		
+		var userFilesSql = getUserListSql(dbc);
+		/*ResultSet resUserQuery = null;		
 		try {		
 			PreparedStatement userQuery = dbc.prepareStatement("SELECT name, pw FROM db_synchro.users;");
 			resUserQuery = userQuery.executeQuery();
@@ -191,7 +191,7 @@ public class Launcher {
 		
 		while (resUserQuery.next()) {
 			userFilesSql.add(new UserInformation(resUserQuery, dbc));
-		}
+		}*/
 				
 		// Vergleich aus Sicht der DBX mit SQL
 		for (var userFileDbx : userFilesDbx) {
@@ -218,7 +218,8 @@ public class Launcher {
 		// Vergleich aus Sicht SQL mit DBX
 		// Query anew because might be changed.
 		userFilesSql.clear();
-		resUserQuery = null;
+		userFilesSql = getUserListSql(dbc);
+		/*resUserQuery = null;
 		try {		
 			PreparedStatement userQuery = dbc.prepareStatement("SELECT name, pw FROM db_synchro.users;");
 			resUserQuery = userQuery.executeQuery();
@@ -228,7 +229,7 @@ public class Launcher {
 		
 		while (resUserQuery.next()) {
 			userFilesSql.add(new UserInformation(resUserQuery, dbc));
-		}
+		}*/
 		
 		for (var userFileSql : userFilesSql) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
@@ -412,9 +413,9 @@ public class Launcher {
 	    // If the local dir does not yet exist, create it.
 		if (!Files.isDirectory(localImgsDir.toAbsolutePath())) {
 			(new File(localImgsDir.toAbsolutePath().toString())).mkdirs();
-			Logger.log("created");
+			Logger.log("Created the directory for images: " + PIC_STORAGE_LOCAL + ".");
 		} else {
-			Logger.log("Dir already exists.");
+			Logger.log("Directory " + PIC_STORAGE_LOCAL + " already exists.");
 		}
 		
 
@@ -541,6 +542,100 @@ public class Launcher {
 			Logger.log("Could not connect to database.");
 			return null;
 		}
+	}
+	
+	private static ArrayList<String> getNamesListDbx(String dbxDir, DbxClientV2 client) {
+		ArrayList<String> fileNames = new ArrayList<String>();
+		try {
+			client.files()
+				.listFolder(dbxDir)
+				.getEntries()
+				.forEach(file -> fileNames.add(file.getName()));					
+		} catch (DbxException e) {
+			Logger.log("Did not find directory " + dbxDir + " in the DBX.");
+		}
+		
+		return fileNames;
+	}
+	
+	private static ArrayList<PictureInformation> getPicListDbx(String dbxDir, DbxClientV2 client) {
+		var picFilesDbx = new ArrayList<PictureInformation>();
+		var picFileNames = getNamesListDbx(dbxDir, client); 
+		
+		for (var name : picFileNames) {
+			try {
+				picFilesDbx.add(new PictureInformation(name, client));
+			} catch (DbxException | IOException e) {
+				Logger.log("Could not download file named " + name + ".");
+				e.printStackTrace();
+				continue; // Try the next one.
+			} 
+		}
+		
+		return picFilesDbx;
+	}
+	
+	private static ArrayList<PictureInformation> getPicListSql(String picTableName, Connection database) {
+		ArrayList<PictureInformation> picFilesSql = new ArrayList<PictureInformation>();
+		ResultSet resPicQuery = null;		
+		try {		
+			PreparedStatement picQuery = database.prepareStatement(
+				"SELECT filename, name, date, explanation, kept_secret," 
+					+ "insta_posted, twitter_posted FROM db_synchro." + picTableName + ";"
+			);
+			resPicQuery = picQuery.executeQuery();
+		} catch (SQLException e) {
+			Logger.log(
+				"Die Query für die Bildinformationen aus " 
+				+ picTableName 
+				+ " konnte nicht ausgeführt werden: " 
+				+ e.getMessage()
+			);
+		}
+		
+		try {
+			while (resPicQuery.next()) {
+				picFilesSql.add(new PictureInformation(resPicQuery, database));
+			}
+		} catch (Exception e) {
+			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
+		}
+		
+		return picFilesSql;
+	}
+	
+	private static ArrayList<UserInformation> getUserListDbx(String dbxDir, DbxClientV2 client) {
+		var userFilesDbx = new ArrayList<UserInformation>();
+		ArrayList<String> userFileNames = getNamesListDbx(dbxDir, client);
+		
+		for (var name : userFileNames) {
+			try {
+				userFilesDbx.add(new UserInformation(name, client));
+			} catch (DbxException | IOException e) {
+				Logger.log("Could not download file named " + name + ".");
+				e.printStackTrace();
+				continue; // Try the next one.
+			} 
+		}
+		
+		return userFilesDbx;
+	}
+	
+	private static ArrayList<UserInformation> getUserListSql(Connection database) {
+		ArrayList<UserInformation> userFilesSql = new ArrayList<UserInformation>();
+		ResultSet resUserQuery = null;		
+		try {		
+			PreparedStatement userQuery = database.prepareStatement("SELECT name, pw FROM db_synchro.users;");
+			resUserQuery = userQuery.executeQuery();
+			
+			while (resUserQuery.next()) {
+				userFilesSql.add(new UserInformation(resUserQuery, database));
+			}
+		} catch (SQLException e) {
+			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
+		}		
+		
+		return userFilesSql;
 	}
 
 }
