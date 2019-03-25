@@ -111,7 +111,7 @@ public class UserInformation extends Information implements DataBaseStorable {
 	
 	public String getUserName() {
 		return user;
-	} // getUserName
+	} // getUserName 
 	
 	private String getClearPassword() {
 		return pw;

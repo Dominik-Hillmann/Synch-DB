@@ -95,7 +95,7 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		for (var tag : tags) System.out.println(tag);
 		System.out.println("Number of tags: " + String.valueOf(tags.length));
 		System.out.println(text + "\n");
-	}
+	} 
 
 	
 	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {

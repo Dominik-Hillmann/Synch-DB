@@ -122,7 +122,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 			Logger.log("Created the directory for images: " + PIC_STORAGE_LOCAL + ".");
 		} else {
 			Logger.log("Directory " + PIC_STORAGE_LOCAL + " already exists.");
-		}
+		} 
 		
 		// Does picture with this name already exist? If not, create the file.
 		File picToBeStored = new File(PIC_FOLDER_LOCAL.toAbsolutePath().toString() + "/" + getFileName());

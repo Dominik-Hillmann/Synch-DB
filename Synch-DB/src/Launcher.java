@@ -99,7 +99,6 @@ public class Launcher {
 				Logger.log("Would delete " + picFileSql.getFileName());
 			}
 		}
-				
 		
 		
 		// Updating all information about the users.

@@ -17,7 +17,7 @@ public interface DataBaseStorable {
 	 * 
 	 * @param database
 	 * @param client
-	 * @throws SQLException
+	 * @throws SQLException 
 	 */
 	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException;
 	

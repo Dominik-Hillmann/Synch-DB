@@ -23,7 +23,7 @@ public abstract class Information {
 	 * @param client to reference the Dropbox account from where to get files.
 	 * @return The JSON file as a string.
 	 * @throws DbxException the file does not exist or unable to connect.
-	 * @throws IOException file was downloaded but stream not opened.
+	 * @throws IOException file was downloaded but stream not opened. 
 	 */
 	static String getJSONString(String path, DbxClientV2 client) throws DbxException, IOException {
 		InputStream in = client
