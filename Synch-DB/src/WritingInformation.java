@@ -53,6 +53,11 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		this.text = info.text;
 	}
 	
+	/**
+	 * 
+	 * @param set
+	 * @param database
+	 */
 	public WritingInformation(ResultSet set, Connection database)  {
 		try {
 			LocalDate date = LocalDate.parse(set.getString("date"), formatter);
@@ -81,6 +86,9 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		}
 	}
 	
+	/**
+	 * 
+	 */
 	public void print() {
 		System.out.println("Date: " + String.valueOf(day) + "." + String.valueOf(month) + "." + String.valueOf(year));
 		System.out.println("Names: " + name);
@@ -89,7 +97,7 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		System.out.println(text + "\n");
 	}
 
-	// placeholder
+	
 	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {
 		String sqlString = "INSERT INTO db_synchro.writ_info VALUES ("
 			+ "'" + getName() + "'," 
@@ -121,8 +129,8 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		String sqlMain = "DELETE FROM db_synchro.writ_info WHERE "
 			+ "name = '" + getName() + "';";
 		database.prepareStatement(sqlMain).executeUpdate();
-		String sqlTags = "DELETE FROM db_synchro.writ_info WHERE "
-			+ "name = '" + getName() + "';";
+		String sqlTags = "DELETE FROM db_synchro.tags_writs WHERE "
+			+ "writ_name = '" + getName() + "';";
 		database.prepareStatement(sqlTags).executeUpdate();
 	}
 	

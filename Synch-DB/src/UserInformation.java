@@ -75,10 +75,10 @@ public class UserInformation extends Information implements DataBaseStorable {
 	
 	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {
 		String sqlString = "INSERT INTO db_synchro.users VALUES ("
-			+ "'" + getUserName() + "'" + "," 
-			+ "'" + encrypt(getClearPassword()) + "'" + ");";
+			+ "'" + getUserName() + "'," 
+			+ "'" + encrypt(getClearPassword()) + "');";
 		
-		for (var picFileName : pics) {
+		for (var picFileName : this.pics) {
 			String additionalPic = "INSERT INTO db_synchro.user_pics VALUES ("
 				+ "'" + getUserName() + "',"
 				+ "'" + picFileName + "');";

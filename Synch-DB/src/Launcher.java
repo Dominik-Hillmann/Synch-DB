@@ -53,49 +53,13 @@ public class Launcher {
         
 		// Vergleich der Picture-Information:
 		// Schritt 1.1: alle Information aus pic_info-Ordner in ArrayList.
-		var picFilesDbx = new ArrayList<PictureInformation>();
-		/*var picFileNames = new ArrayList<String>();
-		// Zuerst die Names der Dateien, dann in den Konstruktoren die eigentlichen Dateien herunterladen.
-		try {
-			client.files()
-				.listFolder(PIC_DIR)
-				.getEntries()
-				.forEach(file -> picFileNames.add(file.getName()));					
-		} catch (DbxException e) {
-			Logger.log("Did not find directory " + PIC_DIR + " in the DBX.");
-		}
+		ArrayList<PictureInformation> picFilesDbx = new ArrayList<PictureInformation>();
 		
-		for (String name : picFileNames) {
-			try {
-				picFilesDbx.add(new PictureInformation(name, client));
-			} catch (DbxException | IOException e) {
-				Logger.log("Could not download file named " + name + ".");
-				e.printStackTrace();
-				continue; // Try the next one.
-			} 
-		}*/
 		picFilesDbx = getPicListDbx(PIC_DIR, client);
 		
 		// Schritt 1.2: alle Information aus pic_infos in der MySQL-DB in eine ArrayList.
-		var picFilesSql = new ArrayList<PictureInformation>();
-		/*ResultSet resPicQuery = null;		
-		try {		
-			PreparedStatement picQuery = dbc.prepareStatement(
-				"SELECT filename, name, date, explanation, kept_secret," 
-					+ "insta_posted, twitter_posted FROM db_synchro.pic_info;"
-			);
-			resPicQuery = picQuery.executeQuery();
-		} catch (SQLException e) {
-			Logger.log("Die Query für die Bildinformationen konnte nicht ausgeführt werden: " + e.getMessage());
-		}		
+		ArrayList<PictureInformation> picFilesSql = new ArrayList<PictureInformation>();
 		
-		try {
-			while (resPicQuery.next()) {
-				picFilesSql.add(new PictureInformation(resPicQuery, dbc));
-			}
-		} catch (Exception e) {
-			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
-		}*/
 		picFilesSql = getPicListSql("pic_info", dbc);
 		
 		
@@ -120,28 +84,9 @@ public class Launcher {
 		}
 		
 		// picFilesSql neu, da Information nun outdated
-		// *******
 		picFilesSql.clear();
 		picFilesSql = getPicListSql("pic_info", dbc);
-		/*ResultSet resPicQuery = null;		
-		try {		
-			PreparedStatement picQuery = dbc.prepareStatement(
-				"SELECT filename, name, date, explanation, kept_secret," 
-					+ "insta_posted, twitter_posted FROM db_synchro.pic_info;"
-			);
-			resPicQuery = picQuery.executeQuery();
-		} catch (SQLException e) {
-			Logger.log("Die Query für die Bildinformationen konnte nicht ausgeführt werden: " + e.getMessage());
-		}
-		
-		try {
-			while (resPicQuery.next()) {
-				picFilesSql.add(new PictureInformation(resPicQuery, dbc));
-			}
-		} catch (Exception e) {
-			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
-		}*/
-		
+				
 		for (var picFileSql : picFilesSql) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			for (var picFileDbx : picFilesDbx) {
@@ -159,40 +104,10 @@ public class Launcher {
 		
 		// Updating all information about the users.
 		var userFilesDbx = getUserListDbx(USER_DIR, client);
-		/*var userFileNames = new ArrayList<String>();
-		try {
-			client.files()
-				.listFolder(USER_DIR)
-				.getEntries()
-				.forEach(file -> userFileNames.add(file.getName()));					
-		} catch (DbxException e) {
-			Logger.log("Did not find directory " + USER_DIR + " in the DBX.");
-		}
-		
-		for (var name : userFileNames) {
-			try {
-				userFilesDbx.add(new UserInformation(name, client));
-			} catch (DbxException | IOException e) {
-				Logger.log("Could not download file named " + name + ".");
-				e.printStackTrace();
-				continue; // Try the next one.
-			} 
-		}*/
-		
+				
 		// Get the user informations from database.
 		var userFilesSql = getUserListSql(dbc);
-		/*ResultSet resUserQuery = null;		
-		try {		
-			PreparedStatement userQuery = dbc.prepareStatement("SELECT name, pw FROM db_synchro.users;");
-			resUserQuery = userQuery.executeQuery();
-		} catch (SQLException e) {
-			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
-		}
-		
-		while (resUserQuery.next()) {
-			userFilesSql.add(new UserInformation(resUserQuery, dbc));
-		}*/
-				
+						
 		// Vergleich aus Sicht der DBX mit SQL
 		for (var userFileDbx : userFilesDbx) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
@@ -219,18 +134,7 @@ public class Launcher {
 		// Query anew because might be changed.
 		userFilesSql.clear();
 		userFilesSql = getUserListSql(dbc);
-		/*resUserQuery = null;
-		try {		
-			PreparedStatement userQuery = dbc.prepareStatement("SELECT name, pw FROM db_synchro.users;");
-			resUserQuery = userQuery.executeQuery();
-		} catch (SQLException e) {
-			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
-		}
-		
-		while (resUserQuery.next()) {
-			userFilesSql.add(new UserInformation(resUserQuery, dbc));
-		}*/
-		
+				
 		for (var userFileSql : userFilesSql) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			for (var userFileDbx : userFilesDbx) {
@@ -246,44 +150,11 @@ public class Launcher {
 		
 		
 		// Writings
-		var writFilesDbx = new ArrayList<WritingInformation>();
-		var writFileNames = new ArrayList<String>();
-		// Zuerst die Names der Dateien, dann in den Konstruktoren die eigentlichen Dateien herunterladen.
-		try {
-			client.files()
-				.listFolder(WRIT_DIR)
-				.getEntries()
-				.forEach(file -> writFileNames.add(file.getName()));					
-		} catch (DbxException e) {
-			Logger.log("Did not find directory " + WRIT_DIR + " in the DBX.");
-		}
-		
-		for (var name : writFileNames) {
-			try {
-				writFilesDbx.add(new WritingInformation(name, client));
-			} catch (DbxException | IOException e) {
-				Logger.log("Could not download file named " + name + ".");
-				e.printStackTrace();
-				continue; // Try the next one.
-			} 
-		}
-		
+		ArrayList<WritingInformation> writFilesDbx = getWritListDbx(WRIT_DIR, client);
+				
 		// Get the writing informations from database.
-		var writFilesSql = new ArrayList<WritingInformation>();
-		ResultSet resWritQuery = null;		
-		try {		
-			PreparedStatement writQuery = dbc.prepareStatement(
-				"SELECT name, date, kept_secret, twitter_posted, insta_posted, text FROM db_synchro.writ_info;"
-			);
-			resWritQuery = writQuery.executeQuery();
-		} catch (SQLException e) {
-			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
-		}
-		
-		while (resWritQuery.next()) {
-			writFilesSql.add(new WritingInformation(resWritQuery, dbc));
-		}
-		
+		ArrayList<WritingInformation> writFilesSql = getWritListSql(dbc);
+				
 		Logger.log("SQL writings: ");
 		for (var writ : writFilesSql) writ.print();
 		
@@ -312,20 +183,8 @@ public class Launcher {
 		
 		// Look at SQL files first.
 		writFilesSql.clear();
-		resWritQuery = null;
-		try {		
-			PreparedStatement writQuery = dbc.prepareStatement(
-				"SELECT name, date, kept_secret, twitter_posted, insta_posted, text FROM db_synchro.writ_info;"
-			);
-			resWritQuery = writQuery.executeQuery();
-		} catch (SQLException e) {
-			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
-		}
-		
-		while (resWritQuery.next()) {
-			writFilesSql.add(new WritingInformation(resWritQuery, dbc));
-		}
-		
+		writFilesSql = getWritListSql(dbc);
+				
 		for (var writFileSql : writFilesSql) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			for (var writFileDbx : writFilesDbx) {
@@ -338,187 +197,12 @@ public class Launcher {
 				Logger.log("Would delete " + writFileSql.getName());
 			}
 		}
-		
-		
-		/*
-		var userFiles = new ArrayList<UserInformation>();
-		var userFileNames = new ArrayList<String>();
-		try {
-			client.files()
-				.listFolder(USER_DIR)
-				.getEntries()
-				.forEach(file -> userFileNames.add(file.getName()));					
-		} catch (DbxException e) {
-			Logger.log("Did not find directory " + USER_DIR + ".");
-		}
-		
-		for (String name : userFileNames) {
-			try {
-				userFiles.add(new UserInformation(name, client));
-			} catch (DbxException | IOException e) {
-				Logger.log("Could not download file named " + name);
-				e.printStackTrace();
-				continue;
-			} 
-		}
-		
-		for (UserInformation info : userFiles) {
-			// info.storeInDataBase();
-		}
-		
-		Logger.log("\n\n");
-		*/
-		
-		
-	
-		
-		/*
-		var writFiles = new ArrayList<WritingInformation>();
-		var writFileNames = new ArrayList<String>();
-		try {
-			client.files()
-				.listFolder(WRIT_DIR)
-				.getEntries()
-				.forEach(file -> writFileNames.add(file.getName()));					
-		} catch (DbxException e) {
-			Logger.log("Did not find directory " + WRIT_DIR + ".");
-		}
-		
-		for (String name : writFileNames) {
-			try {
-				writFiles.add(new WritingInformation(name, client));
-			} catch (DbxException | IOException e) {
-				Logger.log("Could not download file named " + name + ".");
-				e.printStackTrace();
-				continue;
-			} 
-		}
-		
-		Logger.log(writFiles.size());
-		for (WritingInformation info : writFiles) {
-			// info.storeInDataBase();
-		}
-		*/
-		
-		
-		
-		
-		
-		
-		
-	    Path localImgsDir = Paths.get(PIC_STORAGE_LOCAL);
-	    
-	    // Logger.log(localImgsDir.toAbsolutePath().toString());
-		
-	    // If the local dir does not yet exist, create it.
-		if (!Files.isDirectory(localImgsDir.toAbsolutePath())) {
-			(new File(localImgsDir.toAbsolutePath().toString())).mkdirs();
-			Logger.log("Created the directory for images: " + PIC_STORAGE_LOCAL + ".");
-		} else {
-			Logger.log("Directory " + PIC_STORAGE_LOCAL + " already exists.");
-		}
-		
-
-		List<PictureInformation> examplePics = picFilesDbx.subList(0, picFilesDbx.size());
-		
-		for (PictureInformation examplePic : examplePics) {
-			
-			Logger.log();
-			
-			// Does picture with this name already exist? If not, create the file.
-			File picToBeStored = new File(localImgsDir.toAbsolutePath().toString() + "/" + examplePic.getFileName());
-			Logger.log("is File " + picToBeStored.isFile());
-			if (!picToBeStored.isFile()) {
-				try {
-					picToBeStored.createNewFile();
-				} catch (IOException e) {
-					Logger.log("Konnte file " + picToBeStored.getName() + " konnte nicht erstellt.");
-					e.printStackTrace();
-				}
-			} else Logger.log("File " + picToBeStored.getName() + " existiert bereits.");
-			
-			
-			
-			try {
-				// output file for download --> storage location on local system to download file
-				BufferedImage bufferedImage = null;
-				Logger.log(PIC_DIR + examplePic.getFileName());
-	            bufferedImage = ImageIO.read(
-	            	client.files()
-	            		.download(PIC_STORAGE_DBX + examplePic.getFileName())
-	            		.getInputStream()
-	            );
-	            	
-	            Logger.log(bufferedImage.getWidth());
-	            Logger.log(bufferedImage.getHeight());	            
-	            
-	            // Get extension of the file first:
-	            String imgName = picToBeStored.getName();
-	            int extensionStartIndex = imgName.lastIndexOf(".");
-	            String extension = imgName.substring(extensionStartIndex + 1);
-	            Logger.log(extension);
-	            
-	            // Write the picture into local directory.
-	            ImageIO.write(bufferedImage, extension, picToBeStored);          
-	            
-			} catch (IOException e) {
-				Logger.log("Konnte Bild nicht schreiben");
-				e.printStackTrace();
-				
-			} catch (DbxException e) {
-				Logger.log("Konnte Bild nicht herunterladen.");
-				e.printStackTrace();
-			}
-		}
-		
-		PreparedStatement statement;
-		PictureInformation insertPic = examplePics.get(2);
-			try {
-				statement = dbc.prepareStatement("SELECT * FROM pic_info;");
-				ResultSet result = statement.executeQuery();
-				
-				while (result.next()) {
-					Logger.log(result.getString(7));
-				}
-			
-			String sqlString2 = "INSERT INTO pic_info VALUES ("
-				+ "'" + insertPic.getFileName() + "'" + "," 
-				+ "'" + insertPic.getName() + "'" + "," 
-				+ "'" + insertPic.getDateStr() + "'" + ","
-				+ "'" + insertPic.getDescription() + "'" + ","
-				+ "b'" + (insertPic.isSecret() ? 1 : 0) + "'" + ","
-				+ "b'" + (insertPic.postedToTwitter() ? 1 : 0) + "'" + ","
-				+ "b'" + (insertPic.postedToInsta() ? 1 : 0) + "'" + ");";
-			Logger.log(sqlString2);
-			dbc.prepareStatement(sqlString2).executeUpdate();
-			
-			// wenn kein result erwartet, hier speziel für Änderungen in der database
-			// statement.executeUpdate();
-			
-			
-			// Algo fuer den Vergleich und der Aenderung der Eigenschaften in der DB, wenn gleicher filename/ID, aber
-			// irgendwo anderes andere Eigenschaften
-			// wenn DBX-file komplett neuer Filename, dann in die DB.
-			
-			
-		} catch (SQLException sqlEx) {
-			Logger.log("Could not write into database.");
-			Logger.log(sqlEx.getMessage());
-		}		
 			
 		try {
 			dbc.close();
 		} catch (Exception e) {
 			Logger.log("Could not close database connection.");
 		}
-		
-		PictureInformation test1 = picFilesDbx.get(5);
-		var test2 = picFilesDbx.get(5);
-		var test3 = picFilesDbx.get(3);
-		Logger.log("Is same: " + test1.equals(test2));
-		Logger.log("Is same: " + test1.equals(test3));
-		
-		
 		
 		Logger.appendToLogFile();
 	}	
@@ -636,6 +320,43 @@ public class Launcher {
 		}		
 		
 		return userFilesSql;
+	}
+	
+	private static ArrayList<WritingInformation> getWritListDbx(String dbxDir, DbxClientV2 client) {
+		// Writings
+		var writFilesDbx = new ArrayList<WritingInformation>();
+		var writFileNames = getNamesListDbx(dbxDir, client);
+		
+		for (var name : writFileNames) {
+			try {
+				writFilesDbx.add(new WritingInformation(name, client));
+			} catch (DbxException | IOException e) {
+				Logger.log("Could not download file named " + name + ".");
+				e.printStackTrace();
+				continue; // Try the next one.
+			} 
+		}
+		
+		return writFilesDbx;
+	}
+	
+	private static ArrayList<WritingInformation> getWritListSql(Connection database) {
+		ArrayList<WritingInformation> writFilesSql = new ArrayList<WritingInformation>();
+		ResultSet resWritQuery = null;		
+		try {		
+			PreparedStatement writQuery = database.prepareStatement(
+				"SELECT name, date, kept_secret, twitter_posted, insta_posted, text FROM db_synchro.writ_info;"
+			);
+			resWritQuery = writQuery.executeQuery();
+			
+			while (resWritQuery.next()) {
+				writFilesSql.add(new WritingInformation(resWritQuery, database));
+			}
+		} catch (SQLException e) {
+			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
+		}	
+		
+		return writFilesSql;
 	}
 
 }

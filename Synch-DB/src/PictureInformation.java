@@ -1,4 +1,7 @@
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -9,6 +12,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
+
+import javax.imageio.ImageIO;
 
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
@@ -31,6 +36,8 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	private String[] tags;
 	
 	private static final Path PIC_FOLDER_LOCAL = Paths.get("/home/dominik/DB-Synch-imgs/");
+	private static final String PIC_STORAGE_LOCAL = "/home/dominik/DB-Synch-imgs/";
+	private static final String PIC_STORAGE_DBX = "/img/";
 	
 	/**
 	 * 
@@ -65,7 +72,11 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		// TODO auch noch das Bild an sich speichern
 	}
 	
-
+	/**
+	 * 
+	 * @param queryResult
+	 * @param database
+	 */
 	public PictureInformation(ResultSet queryResult, Connection database) {
 		try {
 			LocalDate date = LocalDate.parse(queryResult.getString("date"), formatter);
@@ -96,8 +107,53 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		}
 	}
 	
-	private void savePic(String filename, DbxClientV2 client) throws IOException, DbxException {
-		// TODO Finden des Bildes und einfügen in den Ordner
+	/**
+	 * 
+	 * @param filename
+	 * @param client
+	 * @throws IOException
+	 * @throws DbxException
+	 */
+	private void savePic(DbxClientV2 client) throws IOException, DbxException {
+		// If the necessary directory does not exist, then create it.
+		Path localImgsDir = Paths.get(PIC_STORAGE_LOCAL);		
+		if (!Files.isDirectory(localImgsDir.toAbsolutePath())) {
+			(new File(localImgsDir.toAbsolutePath().toString())).mkdirs();
+			Logger.log("Created the directory for images: " + PIC_STORAGE_LOCAL + ".");
+		} else {
+			Logger.log("Directory " + PIC_STORAGE_LOCAL + " already exists.");
+		}
+		
+		// Does picture with this name already exist? If not, create the file.
+		File picToBeStored = new File(PIC_FOLDER_LOCAL.toAbsolutePath().toString() + "/" + getFileName());
+						
+		if (!picToBeStored.isFile()) {
+			try {
+				picToBeStored.setWritable(true);
+				picToBeStored.createNewFile();
+			} catch (IOException e) {
+				Logger.log("Konnte file " + picToBeStored.getName() + " konnte nicht erstellt.");
+				e.printStackTrace();
+			}
+		} else Logger.log("File " + picToBeStored.getName() + " existiert bereits.");
+				
+		
+		// output file for download --> storage location on local system to download file
+		BufferedImage bufferedImage = null;
+		bufferedImage = ImageIO.read(
+           	client.files()
+           		.download(PIC_STORAGE_DBX + this.getFileName())
+           		.getInputStream()
+           );            	
+		// Logger.log(bufferedImage.getWidth());
+		// Logger.log(bufferedImage.getHeight());	            
+		// Get extension of the file first:
+		String imgName = picToBeStored.getName();
+		int extensionStartIndex = imgName.lastIndexOf(".");
+		String extension = imgName.substring(extensionStartIndex + 1);
+                 
+		// Write the picture into local directory.
+		ImageIO.write(bufferedImage, extension, picToBeStored);
 	}
 	
 	public void print() {
@@ -129,7 +185,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		}
 		
 		try {
-			savePic(getFileName(), client);
+			savePic(client);
 		} catch (Exception e) {
 			throw new SQLException("Could not find any picture with filename " + getFileName() + ". Information was not inserted into database.");
 		}
