@@ -264,7 +264,8 @@ public class Launcher {
 		try {		
 			PreparedStatement picQuery = database.prepareStatement(
 				"SELECT filename, name, date, explanation, kept_secret," 
-					+ "insta_posted, twitter_posted FROM db_synchro." + picTableName + ";"
+					+ "insta_posted, twitter_posted, category "
+					+ "FROM db_synchro." + picTableName + ";"
 			);
 			resPicQuery = picQuery.executeQuery();
 		} catch (SQLException e) {
@@ -288,7 +289,7 @@ public class Launcher {
 	}
 	
 	private static ArrayList<UserInformation> getUserListDbx(String dbxDir, DbxClientV2 client) {
-		var userFilesDbx = new ArrayList<UserInformation>();
+		ArrayList<UserInformation> userFilesDbx = new ArrayList<UserInformation>();
 		ArrayList<String> userFileNames = getNamesListDbx(dbxDir, client);
 		
 		for (var name : userFileNames) {
@@ -344,7 +345,7 @@ public class Launcher {
 		ResultSet resWritQuery = null;		
 		try {		
 			PreparedStatement writQuery = database.prepareStatement(
-				"SELECT name, date, kept_secret, twitter_posted, insta_posted, text FROM db_synchro.writ_info;"
+				"SELECT name, date, kept_secret, twitter_posted, insta_posted, text, category FROM db_synchro.writ_info;"
 			);
 			resWritQuery = writQuery.executeQuery();
 			
@@ -365,11 +366,4 @@ public class Launcher {
  * den Log wieder in die DB laden, um Fehler sehen zu können
  * SQL-Files, um Datenbank wieder auf Raspi herstellen zu können.
  * Fotos auf der Hauptseite über DBX bestimmen.
- */
-/**
- * TODO
- * Does comparison of writings work as intended?
- * Writing-Info Schema
- * Download der Bilder in PictureInformation.storeToDataBase integrieren
- * Zusammenfassende Funktionen für wiederkehrende Abläufe, wie Download, etc
  */

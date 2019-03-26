@@ -21,6 +21,7 @@ public class WritingInformation extends Information implements DataBaseStorable 
 	private boolean twitter;
 	private boolean instagram;
 	private String[] tags;
+	private String category;
 	private String text;
 	
 	/**
@@ -45,11 +46,16 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		this.day = info.day;
 		this.month = info.month;
 		this.year = info.year;
+		
 		this.name = info.name;
+		
 		this.secret = info.secret;
 		this.twitter = info.twitter;
 		this.instagram = info.instagram;
+		
 		this.tags = info.tags;
+		this.category = info.category;
+		
 		this.text = info.text;
 	}
 	
@@ -70,6 +76,7 @@ public class WritingInformation extends Information implements DataBaseStorable 
 			this.twitter = set.getBoolean("twitter_posted");
 			this.instagram = set.getBoolean("insta_posted");
 			this.text = set.getString("text");
+			this.category = set.getString("category");
 			
 			// Tags
 			String tagsQuery = "SELECT tag_name FROM db_synchro.tags_writs WHERE writ_name='"
@@ -105,7 +112,8 @@ public class WritingInformation extends Information implements DataBaseStorable 
 			+ "b'" + (isSecret() ? 1 : 0) + "',"
 			+ "b'" + (postedToTwitter() ? 1 : 0) + "',"
 			+ "b'" + (postedToInstagram() ? 1 : 0) + "',"
-			+ "'" + getText() + "');";
+			+ "'" + getText() +"',"
+			+ "'" + getCategory() + "');";
 		database.prepareStatement(sqlString).executeUpdate();
 		
 		for (var tag : this.tags) {
@@ -150,7 +158,8 @@ public class WritingInformation extends Information implements DataBaseStorable 
 				&& isSecret() == compareInfo.isSecret()
 				&& postedToTwitter() == compareInfo.postedToTwitter()
 				&& postedToInstagram() == compareInfo.postedToInstagram()
-				&& getText().equals(compareInfo.getText())) {
+				&& getText().equals(compareInfo.getText())
+				&& getCategory().equals(compareInfo.getCategory())) {
 				return DataChangeMarker.SAME_FILE_KEPT_SAME;
 			} else return DataChangeMarker.SAME_FILE_CHANGED;
 		} else return DataChangeMarker.DIFFERENT_FILE;
@@ -181,6 +190,10 @@ public class WritingInformation extends Information implements DataBaseStorable 
 	
 	public String getText() {
 		return this.text;
+	}
+	
+	public String getCategory() {
+		return category;
 	}
 	
 }

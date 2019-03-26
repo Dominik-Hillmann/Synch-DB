@@ -34,6 +34,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	private boolean twitter;
 	
 	private String[] tags;
+	private String category;
 	
 	private static final Path PIC_FOLDER_LOCAL = Paths.get("/home/dominik/DB-Synch-imgs/");
 	private static final String PIC_STORAGE_LOCAL = "/home/dominik/DB-Synch-imgs/";
@@ -68,6 +69,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		this.instagram = info.instagram;
 		this.twitter = info.twitter;
 		this.tags = info.tags;
+		this.category = info.category;
 		
 		// TODO auch noch das Bild an sich speichern
 	}
@@ -91,6 +93,8 @@ public class PictureInformation extends Information implements DataBaseStorable 
 			this.secret = queryResult.getBoolean("kept_secret");
 			this.instagram = queryResult.getBoolean("insta_posted");
 			this.twitter = queryResult.getBoolean("twitter_posted");
+			
+			this.category = queryResult.getString("category");
 			
 			String tagsQuery = "SELECT tag_name FROM db_synchro.tags_pics WHERE pic_filename = '"
 					+ getFileName() + "';";
@@ -164,13 +168,14 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	
 	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException { 
 		String sqlString = "INSERT INTO db_synchro.pic_info VALUES ("
-			+ "'" + getFileName() + "'" + "," 
-			+ "'" + getName() + "'" + "," 
-			+ "'" + getDateStr() + "'" + ","
-			+ "'" + getDescription() + "'" + ","
-			+ "b'" + (isSecret() ? 1 : 0) + "'" + ","
-			+ "b'" + (postedToTwitter() ? 1 : 0) + "'" + ","
-			+ "b'" + (postedToInsta() ? 1 : 0) + "'" + ");";
+			+ "'" + getFileName() + "'," 
+			+ "'" + getName() + "'," 
+			+ "'" + getDateStr() + "',"
+			+ "'" + getDescription() + "',"
+			+ "b'" + (isSecret() ? 1 : 0) + "',"
+			+ "b'" + (postedToTwitter() ? 1 : 0) + "',"
+			+ "b'" + (postedToInsta() ? 1 : 0) + "'," 
+			+ "'" + getCategory() + "');";
 		
 		for (var tag : this.tags) {
 			String newTagSql = "INSERT INTO db_synchro.tags_pics VALUES ("
@@ -237,6 +242,10 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		return instagram;
 	}
 	
+	public String getCategory() {
+		return category;
+	}
+	
 	public ArrayList<String> getTags() {
 		return new ArrayList<String>(Arrays.asList(tags));
 	}
@@ -269,6 +278,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 				&& isSecret() == compareInfo.isSecret()
 				&& postedToTwitter() == compareInfo.postedToTwitter()
 				&& postedToInsta() == compareInfo.postedToInsta()
+				&& getCategory().equals(compareInfo.getCategory())
 				&& sameTags
 				? DataChangeMarker.SAME_FILE_KEPT_SAME : DataChangeMarker.SAME_FILE_CHANGED;
 		} else return DataChangeMarker.DIFFERENT_FILE;

@@ -1,4 +1,4 @@
--- First, create the actual database.
+-- First, create the database.
 CREATE DATABASE db_synchro;
 USE db_synchro;
 
@@ -11,6 +11,8 @@ CREATE TABLE pic_info(
     kept_secret     BIT NOT NULL,
     twitter_posted  BIT NOT NULL,
     insta_posted    BIT NOT NULL,
+    category        VARCHAR(250) NOT NULL,
+
     PRIMARY KEY (filename)
 );
 
@@ -21,13 +23,22 @@ CREATE TABLE writ_info(
     twitter_posted  BIT NOT NULL,
     insta_posted    BIT NOT NULL,
     text            MEDIUMTEXT NOT NULL,
+    category        VARCHAR(250) NOT NULL,
+
     PRIMARY KEY (name)
 );
 
 CREATE TABLE users(
-    name        VARCHAR(250) NOT NULL,
-    pw          VARCHAR(250) NOT NULL,
+    name    VARCHAR(250) NOT NULL,
+    pw      VARCHAR(250) NOT NULL,
+
     PRIMARY KEY (name)
+);
+
+-- Table that saves the name for every front page pic for the picture categories.
+CREATE TABLE front_pics(
+    category_name   VARCHAR(250) NOT NULL,
+    pic_filename    VARCHAR(250) NOT NULL
 );
 
 -- Tables for n-m relationships. 
