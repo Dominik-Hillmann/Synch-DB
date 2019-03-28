@@ -45,6 +45,7 @@ public class Launcher {
 	
 	public static void main(String[] args) throws Exception {
 		Connection dbc = getConnection();
+		createDatabase(dbc);
 	
 		// First try to import and use the Dropbox library properly.
 		DbxRequestConfig config = DbxRequestConfig.newBuilder("Synch-DB").build();
@@ -70,16 +71,25 @@ public class Launcher {
 				markers.add(picFileDbx.containsSameData(picFileSql));
 			}
 			
+			
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME) 
 				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				
 				picFileDbx.storeInDataBase(dbc, client);
+				
 			} else if (markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				
 				picFileDbx.updateDataBase(dbc, client);
+				
 			} else if (markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)) {
+				
 				continue;
+				
 			} else {
+				
 				for (var marker : markers) Logger.log(marker.toString());
 				throw new Exception("Did not anticipate this marker structure");
+				
 			}
 		}
 		
@@ -358,9 +368,96 @@ public class Launcher {
 		
 		return writFilesSql;
 	}
+	
+	private static void createDatabase(Connection database) {
+		try {
+			PreparedStatement dbCreation = database.prepareStatement("CREATE DATABASE IF NOT EXISTS db_synchro;");
+			dbCreation.executeUpdate();
+			
+			PreparedStatement pic_infoCreation = database.prepareStatement(
+				"CREATE TABLE IF NOT EXISTS pic_info("
+				+ "filename VARCHAR(250) NOT NULL,"
+				+ "name VARCHAR(250) NOT NULL,"
+				+ "date DATE NOT NULL," 
+				+ "explanation TEXT NOT NULL,"
+				+ "kept_secret BIT NOT NULL,"
+				+ "twitter_posted BIT NOT NULL,"
+				+ "insta_posted BIT NOT NULL,"
+				+ "category VARCHAR(250) NOT NULL,"
+				+ "PRIMARY KEY (filename));"
+			);
+			pic_infoCreation.executeUpdate();
+			
+			PreparedStatement writ_infoCreation = database.prepareStatement(
+				"CREATE TABLE IF NOT EXISTS writ_info(" 
+				+ "name VARCHAR(250) NOT NULL," 
+				+ "date DATE NOT NULL," 
+				+ "kept_secret BIT NOT NULL," 
+				+ "twitter_posted BIT NOT NULL," 
+				+ "insta_posted BIT NOT NULL," 
+				+ "text MEDIUMTEXT NOT NULL," 
+				+ "category VARCHAR(250) NOT NULL,"
+				+ "PRIMARY KEY (name));"
+			);
+			writ_infoCreation.executeUpdate();
+					
+			PreparedStatement usersCreation = database.prepareStatement(
+				"CREATE TABLE IF NOT EXISTS users(" 
+				+ "name VARCHAR(250) NOT NULL," 
+				+ "pw VARCHAR(250) NOT NULL,"
+				+ "PRIMARY KEY (name));"
+			);
+			usersCreation.executeUpdate();
+			
+			PreparedStatement front_picsCreation = database.prepareStatement(
+				"CREATE TABLE IF NOT EXISTS front_pics("
+				+ "category_name VARCHAR(250) NOT NULL," 
+				+ "pic_filename VARCHAR(250) NOT NULL);"
+			);
+			front_picsCreation.executeUpdate();
+			
+			PreparedStatement user_picsCreation = database.prepareStatement(
+				"CREATE TABLE IF NOT EXISTS user_pics("
+				+ "user_name VARCHAR(250) NOT NULL," 
+				+ "pic_filename VARCHAR(250) NOT NULL);"
+			);
+			user_picsCreation.executeUpdate();
+			
+			PreparedStatement user_writsCreation = database.prepareStatement(
+				"CREATE TABLE IF NOT EXISTS user_writs("
+				+ "user_name VARCHAR(250) NOT NULL," 
+				+ "writ_name VARCHAR(250) NOT NULL);"
+			);
+			user_writsCreation.executeUpdate();
+			
+			PreparedStatement tags_picsCreation = database.prepareStatement(
+				"CREATE TABLE IF NOT EXISTS tags_pics("
+				+ "tag_name VARCHAR(250) NOT NULL," 
+				+ "pic_filename VARCHAR(250) NOT NULL,"
+				+ "UNIQUE (tag_name, pic_filename));"
+			);
+			tags_picsCreation.executeUpdate();
+			
+			PreparedStatement tags_writsCreation = database.prepareStatement(
+				"CREATE TABLE IF NOT EXISTS tags_writs(tag_name VARCHAR(250) NOT NULL,"
+				+ "writ_name VARCHAR(250) NOT NULL, UNIQUE (tag_name, writ_name));"
+			);
+			tags_writsCreation.executeUpdate();
+			
+			Logger.log("Erfolg in DB Creation");
+		} catch (SQLException e) {
+			Logger.log("Konnte Datenbank nicht erstellen.");
+		} // try/catch
+	} // createDatabase
 
-}
+} // Launcher
 
+
+/**
+ * TODO
+ * Logger
+ * Alle möglichen Fehler, z.B. fehlendes Bild zum Namen antizipieren und in Logfile eintragen lassen
+ */
 /**
  * IDEEN
  * den Log wieder in die DB laden, um Fehler sehen zu können
