@@ -12,24 +12,27 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
 public class WritingInformation extends Information implements DataBaseStorable {
-
+	
 	private int day;
 	private int month;
 	private int year;
-	private String name;
+	
 	private boolean secret;
 	private boolean twitter;
 	private boolean instagram;
+	
+	private String name;	
+	private String text;
+
 	private String[] tags;
 	private String category;
-	private String text;
 	
 	/**
-	 * 
-	 * @param filename
-	 * @param client
-	 * @throws IOException
-	 * @throws DbxException
+	 * Creates object by finding corresponding JSON file in the DropBox.
+	 * @param filename is the name of the JSON file.
+	 * @param client with information to connect to the DropBox.
+	 * @throws IOException if the JSON file contains unexpected information or is somehow wrong.
+	 * @throws DbxException if the file with this filename does not exist in the DropBox.
 	 */
 	public WritingInformation(String filename, DbxClientV2 client) throws IOException, DbxException {
 		Gson gson = new Gson();
@@ -43,69 +46,56 @@ public class WritingInformation extends Information implements DataBaseStorable 
 			throw new IOException("JSON string could not be converted.");
 		}
 
-		this.day = info.day;
-		this.month = info.month;
-		this.year = info.year;
-		
-		this.name = info.name;
-		
-		this.secret = info.secret;
-		this.twitter = info.twitter;
-		this.instagram = info.instagram;
-		
-		this.tags = info.tags;
-		this.category = info.category;
-		
-		this.text = info.text;
-	}
-	
-	/**
-	 * 
-	 * @param set
-	 * @param database
-	 */
-	public WritingInformation(ResultSet set, Connection database)  {
 		try {
-			LocalDate date = LocalDate.parse(set.getString("date"), formatter);
-			this.day = date.getDayOfMonth();
-			this.month = date.getMonthValue();
-			this.year = date.getYear();
-			
-			this.name = set.getString("name");
-			this.secret = set.getBoolean("kept_secret");
-			this.twitter = set.getBoolean("twitter_posted");
-			this.instagram = set.getBoolean("insta_posted");
-			this.text = set.getString("text");
-			this.category = set.getString("category");
-			
-			// Tags
-			String tagsQuery = "SELECT tag_name FROM db_synchro.tags_writs WHERE writ_name='"
-				+ getName() + "';";
-			ResultSet tagQueryRes = database.prepareStatement(tagsQuery).executeQuery();
-			ArrayList<String> tags = new ArrayList<String>();
-			while (tagQueryRes.next()) {
-				tags.add(tagQueryRes.getString("tag_name"));
-			}			
-			this.tags = Arrays.copyOf(tags.toArray(), tags.toArray().length, String[].class);
-			
+			this.day = info.day;
+			this.month = info.month;
+			this.year = info.year;
+			this.name = info.name;
+			this.secret = info.secret;
+			this.twitter = info.twitter;
+			this.instagram = info.instagram;
+			this.tags = info.tags;
+			this.category = info.category;
+			this.text = info.text;
 		} catch (Exception e) {
-			Logger.log("Could not retrieve value from query: " + e.getMessage());
+			throw new IOException("A value in " + filename + " has the wrong type or is not used.");
 		}
 	}
 	
 	/**
-	 * 
+	 * Creates object using the information from the query.
+	 * @param set with the cursor on the entry with the information you want to create this object with.
+	 * @param database Connection to have access to the MySQL database.
+	 * @throws SQLException if a column cannot be found for the entry the cursor points to.
 	 */
-	public void print() {
-		System.out.println("Date: " + String.valueOf(day) + "." + String.valueOf(month) + "." + String.valueOf(year));
-		System.out.println("Names: " + name);
-		for (var tag : tags) System.out.println(tag);
-		System.out.println("Number of tags: " + String.valueOf(tags.length));
-		System.out.println(text + "\n");
-	} 
-
+	public WritingInformation(ResultSet set, Connection database) throws SQLException {
+		// Assign values first.
+		LocalDate date = LocalDate.parse(set.getString("date"), FORMATTER);
+		this.day = date.getDayOfMonth();
+		this.month = date.getMonthValue();
+		this.year = date.getYear();
+			
+		this.name = set.getString("name");
+		this.secret = set.getBoolean("kept_secret");
+		this.twitter = set.getBoolean("twitter_posted");
+		this.instagram = set.getBoolean("insta_posted");
+		this.text = set.getString("text");
+		this.category = set.getString("category");
+			
+		// Then construct tag array from other table.
+		String tagsQuery = "SELECT tag_name FROM db_synchro.tags_writs WHERE writ_name='"
+			+ getName() + "';";
+		ResultSet tagQueryRes = database.prepareStatement(tagsQuery).executeQuery();
+		ArrayList<String> tags = new ArrayList<String>();
+		while (tagQueryRes.next()) {
+			tags.add(tagQueryRes.getString("tag_name"));
+		}			
+		this.tags = Arrays.copyOf(tags.toArray(), tags.toArray().length, String[].class);
+	}
+	
 	
 	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {
+		// First store main information in the table.
 		String sqlString = "INSERT INTO db_synchro.writ_info VALUES ("
 			+ "'" + getName() + "'," 
 			+ "'" + getDateStr() + "',"
@@ -116,6 +106,7 @@ public class WritingInformation extends Information implements DataBaseStorable 
 			+ "'" + getCategory() + "');";
 		database.prepareStatement(sqlString).executeUpdate();
 		
+		// Then store the tags one by one.
 		for (var tag : this.tags) {
 			String newTagSql = "INSERT INTO db_synchro.tags_writs VALUES ("
 				+ "'" + tag + "',"
@@ -124,16 +115,19 @@ public class WritingInformation extends Information implements DataBaseStorable 
 				database.prepareStatement(newTagSql).executeUpdate();
 			} catch (SQLException e) {
 				continue;
-			} // try			
-		} // for
-	} // storeInDataBase
+			}		
+		}
+	}
 
+	
 	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException {
 		deleteFromDataBase(database);
 		storeInDataBase(database, client);
 	}
 	
+	
 	public void deleteFromDataBase(Connection database) throws SQLException {
+		// Delete first from main table for writings, then delete the tags.
 		String sqlMain = "DELETE FROM db_synchro.writ_info WHERE "
 			+ "name = '" + getName() + "';";
 		database.prepareStatement(sqlMain).executeUpdate();
@@ -165,9 +159,7 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		} else return DataChangeMarker.DIFFERENT_FILE;
 	}
 	
-	public String getName() {
-		return this.name;
-	}
+	// Remaining getters, setters and printing methods follow.
 	
 	public String getDateStr() {
 		String dayStr = String.valueOf(day);
@@ -175,25 +167,24 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		String yearStr = String.valueOf(year);
 		return yearStr + "-" + monthStr + "-" + dayStr;
 	}
+	public String getName() { return this.name;	}
 	
-	public boolean isSecret() {
-		return this.secret;
-	}
+	public boolean isSecret() {	return this.secret; }
 	
-	public boolean postedToTwitter() {
-		return this.twitter;
-	}
+	public boolean postedToTwitter() { return this.twitter;	}
 	
-	public boolean postedToInstagram() {
-		return this.instagram;
-	}
+	public boolean postedToInstagram() { return this.instagram; }
 	
-	public String getText() {
-		return this.text;
-	}
+	public String getText() { return this.text; }
 	
-	public String getCategory() {
-		return category;
-	}
+	public String getCategory() { return category; }
+	
+	public void print() {
+		System.out.println("Date: " + String.valueOf(day) + "." + String.valueOf(month) + "." + String.valueOf(year));
+		System.out.println("Names: " + name);
+		for (var tag : tags) System.out.println(tag);
+		System.out.println("Number of tags: " + String.valueOf(tags.length));
+		System.out.println(text + "\n");
+	} 
 	
 }

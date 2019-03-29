@@ -1,9 +1,10 @@
 
 public enum DataChangeMarker { 
-	DIFFERENT_TYPE, 
-	DIFFERENT_FILE, 
-	SAME_FILE_CHANGED, 
-	SAME_FILE_KEPT_SAME;
+	
+	DIFFERENT_TYPE, // e.g. PictureInformation vs. Writing Information
+	DIFFERENT_FILE, // different primary keys
+	SAME_FILE_CHANGED, // same primary keys with changed attributes
+	SAME_FILE_KEPT_SAME; // The primary key and all attributes stayed the same.
 	
 	public String toString() {
 		switch (this) {
@@ -13,4 +14,5 @@ public enum DataChangeMarker {
 			default: return "SAME_FILE_KEPT_SAME";
 		}
 	}
+	
 }

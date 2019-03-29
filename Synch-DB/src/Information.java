@@ -7,14 +7,10 @@ import java.util.Locale;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
 
-/**
- * 
- */
-
 public abstract class Information {
 	
 	// For date conversion from MySQL queries in all child classes.
-	protected static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.GERMAN);
+	protected static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.GERMAN);
 	
 	/**
 	 * Gets the JSON file as string as found on the given path.
@@ -34,6 +30,9 @@ public abstract class Information {
 		return new String(in.readAllBytes(), StandardCharsets.UTF_8);
 	}
 	
+	/**
+	 * Prints object to console.
+	 */
 	public abstract void print();
 	
 }

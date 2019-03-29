@@ -43,26 +43,26 @@ public class Launcher {
 	private static final String PIC_STORAGE_LOCAL = "/home/dominik/DB-Synch-imgs/";
 	private static final String PIC_STORAGE_DBX = "/img/";
 	
-	public static void main(String[] args) throws Exception {
-		Connection dbc = getConnection();
-		createDatabase(dbc);
 	
-		// First try to import and use the Dropbox library properly.
+	public static void main(String[] args) throws Exception {
+		Connection dbc;
+		try {
+			dbc = getConnection();
+		} catch (SQLException e) {
+			System.exit(0);
+		}
+		createDatabase(dbc);
 		DbxRequestConfig config = DbxRequestConfig.newBuilder("Synch-DB").build();
-		// Groupings of parameters of how to contact the Dropbox API.
 		DbxClientV2 client = new DbxClientV2(config, TOKEN);
+		// Groupings of parameters of how to contact the Dropbox API.
         
-		// Vergleich der Picture-Information:
-		// Schritt 1.1: alle Information aus pic_info-Ordner in ArrayList.
-		ArrayList<PictureInformation> picFilesDbx = new ArrayList<PictureInformation>();
 		
-		picFilesDbx = getPicListDbx(PIC_DIR, client);
+		// ############
+		// ### PICS ###
+		// ############
 		
-		// Schritt 1.2: alle Information aus pic_infos in der MySQL-DB in eine ArrayList.
-		ArrayList<PictureInformation> picFilesSql = new ArrayList<PictureInformation>();
-		
-		picFilesSql = getPicListSql("pic_info", dbc);
-		
+		ArrayList<PictureInformation> picFilesDbx = getPicListDbx(PIC_DIR, client);		
+		ArrayList<PictureInformation> picFilesSql = getPicListSql("pic_info", dbc);		
 		
 		for (var picFileDbx : picFilesDbx) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
@@ -70,35 +70,28 @@ public class Launcher {
 			for (var picFileSql : picFilesSql) {
 				markers.add(picFileDbx.containsSameData(picFileSql));
 			}
-			
-			
+						
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME) 
-				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
-				
-				picFileDbx.storeInDataBase(dbc, client);
-				
-			} else if (markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
-				
-				picFileDbx.updateDataBase(dbc, client);
-				
-			} else if (markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)) {
-				
-				continue;
-				
-			} else {
-				
+				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {				
+				picFileDbx.storeInDataBase(dbc, client);				
+			} else if (markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {				
+				picFileDbx.updateDataBase(dbc, client);				
+			} else if (markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)) {				
+				continue;				
+			} else {				
 				for (var marker : markers) Logger.log(marker.toString());
-				throw new Exception("Did not anticipate this marker structure");
-				
+				throw new Exception("Did not anticipate this marker structure");				
 			}
 		}
 		
-		// picFilesSql neu, da Information nun outdated
+		// Because the comparison could be followed by altered or new entries into the database,
+		// it has to be queried again.
 		picFilesSql.clear();
 		picFilesSql = getPicListSql("pic_info", dbc);
 				
 		for (var picFileSql : picFilesSql) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
+			
 			for (var picFileDbx : picFilesDbx) {
 				markers.add(picFileSql.containsSameData(picFileDbx));
 			}
@@ -106,16 +99,17 @@ public class Launcher {
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)
 				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
 				picFileSql.deleteFromDataBase(dbc);
-				Logger.log("Would delete " + picFileSql.getFileName());
+				Logger.log("Deleted " + picFileSql.getFileName() + " from database.");
 			}
 		}
 		
 		
-		// Updating all information about the users.
-		var userFilesDbx = getUserListDbx(USER_DIR, client);
-				
-		// Get the user informations from database.
-		var userFilesSql = getUserListSql(dbc);
+		// #############
+		// ### USERS ###
+		// #############
+		
+		ArrayList<UserInformation> userFilesDbx = getUserListDbx(USER_DIR, client);				
+		ArrayList<UserInformation> userFilesSql = getUserListSql(dbc);
 						
 		// Vergleich aus Sicht der DBX mit SQL
 		for (var userFileDbx : userFilesDbx) {
@@ -139,7 +133,6 @@ public class Launcher {
 			}
 		}
 		
-		// Vergleich aus Sicht SQL mit DBX
 		// Query anew because might be changed.
 		userFilesSql.clear();
 		userFilesSql = getUserListSql(dbc);
@@ -158,17 +151,13 @@ public class Launcher {
 		}
 		
 		
-		// Writings
-		ArrayList<WritingInformation> writFilesDbx = getWritListDbx(WRIT_DIR, client);
-				
-		// Get the writing informations from database.
-		ArrayList<WritingInformation> writFilesSql = getWritListSql(dbc);
-				
-		Logger.log("SQL writings: ");
-		for (var writ : writFilesSql) writ.print();
+		// ################
+		// ### WRITINGS ###
+		// ################
 		
-		// ***** Does comparison of writings work as intended? *****
-		// Look at DBX files first.
+		ArrayList<WritingInformation> writFilesDbx = getWritListDbx(WRIT_DIR, client);
+		ArrayList<WritingInformation> writFilesSql = getWritListSql(dbc);
+		
 		for (var writFileDbx : writFilesDbx) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			
@@ -190,7 +179,6 @@ public class Launcher {
 			}
 		}
 		
-		// Look at SQL files first.
 		writFilesSql.clear();
 		writFilesSql = getWritListSql(dbc);
 				
@@ -216,42 +204,41 @@ public class Launcher {
 		Logger.appendToLogFile();
 	}	
 	
-	public static Connection getConnection() {		
+	public static Connection getConnection() throws SQLException {		
+		final String driverName = "com.mysql.jdbc.Driver";
+		final String dataBaseUrl = "jdbc:mysql://localhost:3306/";//db_synchro";
+			
 		try {
-			final String driverName = "com.mysql.jdbc.Driver";
-			final String dataBaseUrl = "jdbc:mysql://localhost:3306/db_synchro";
-			
 			Class.forName(driverName);
-			
-			Connection conn = DriverManager.getConnection(
-				dataBaseUrl,
-				DataBaseAccess.username,
-				DataBaseAccess.password
-			);
-			Logger.log("Connected to database.");
-			
-			return conn;
-		} catch (Exception ex) {
-			Logger.log("Could not connect to database.");
-			return null;
+		} catch (ClassNotFoundException e) {
+			throw new SQLException("Could not connect to database.");
 		}
+		
+		Connection conn = DriverManager.getConnection(
+			dataBaseUrl,
+			DataBaseAccess.USERNAME,
+			DataBaseAccess.PASSWORD
+		);
+			
+		Logger.log("Connected to database.");			
+		return conn;
 	}
 	
-	private static ArrayList<String> getNamesListDbx(String dbxDir, DbxClientV2 client) {
+	private static ArrayList<String> getNamesListDbx(String dbxDir, DbxClientV2 client) throws DbxException {
 		ArrayList<String> fileNames = new ArrayList<String>();
-		try {
+		//try {
 			client.files()
 				.listFolder(dbxDir)
 				.getEntries()
 				.forEach(file -> fileNames.add(file.getName()));					
-		} catch (DbxException e) {
+		/*} catch (DbxException e) {
 			Logger.log("Did not find directory " + dbxDir + " in the DBX.");
-		}
+		}*/
 		
 		return fileNames;
 	}
 	
-	private static ArrayList<PictureInformation> getPicListDbx(String dbxDir, DbxClientV2 client) {
+	private static ArrayList<PictureInformation> getPicListDbx(String dbxDir, DbxClientV2 client) throws DbxException {
 		var picFilesDbx = new ArrayList<PictureInformation>();
 		var picFileNames = getNamesListDbx(dbxDir, client); 
 		
@@ -260,7 +247,6 @@ public class Launcher {
 				picFilesDbx.add(new PictureInformation(name, client));
 			} catch (DbxException | IOException e) {
 				Logger.log("Could not download file named " + name + ".");
-				e.printStackTrace();
 				continue; // Try the next one.
 			} 
 		}
@@ -298,7 +284,7 @@ public class Launcher {
 		return picFilesSql;
 	}
 	
-	private static ArrayList<UserInformation> getUserListDbx(String dbxDir, DbxClientV2 client) {
+	private static ArrayList<UserInformation> getUserListDbx(String dbxDir, DbxClientV2 client) throws DbxException {
 		ArrayList<UserInformation> userFilesDbx = new ArrayList<UserInformation>();
 		ArrayList<String> userFileNames = getNamesListDbx(dbxDir, client);
 		
@@ -332,7 +318,7 @@ public class Launcher {
 		return userFilesSql;
 	}
 	
-	private static ArrayList<WritingInformation> getWritListDbx(String dbxDir, DbxClientV2 client) {
+	private static ArrayList<WritingInformation> getWritListDbx(String dbxDir, DbxClientV2 client) throws DbxException {
 		// Writings
 		var writFilesDbx = new ArrayList<WritingInformation>();
 		var writFileNames = getNamesListDbx(dbxDir, client);
@@ -373,6 +359,9 @@ public class Launcher {
 		try {
 			PreparedStatement dbCreation = database.prepareStatement("CREATE DATABASE IF NOT EXISTS db_synchro;");
 			dbCreation.executeUpdate();
+			
+			PreparedStatement useDatabase = database.prepareStatement("USE db_synchro;");
+			useDatabase.executeUpdate();
 			
 			PreparedStatement pic_infoCreation = database.prepareStatement(
 				"CREATE TABLE IF NOT EXISTS pic_info("

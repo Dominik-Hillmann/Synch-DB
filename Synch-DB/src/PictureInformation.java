@@ -8,10 +8,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Locale;
 
 import javax.imageio.ImageIO;
 
@@ -41,11 +39,11 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	private static final String PIC_STORAGE_DBX = "/img/";
 	
 	/**
-	 * 
-	 * @param filename
-	 * @param client
-	 * @throws IOException
-	 * @throws DbxException
+	 * Creates object by getting the information from the JSON file in the DropBox.
+	 * @param filename is the name of the JSON file containing the wanted information.
+	 * @param client with information to connect to the DropBox.
+	 * @throws IOException if the JSON file contains unexpected information or is somehow wrong.
+	 * @throws DbxException if the file with this filename does not exist in the DropBox.
 	 */
 	public PictureInformation(String filename, DbxClientV2 client) throws IOException, DbxException {
 		Gson gson = new Gson();
@@ -56,67 +54,66 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		try {
 			info = gson.fromJson(jsonStr, PictureInformation.class);
 		} catch (JsonSyntaxException jse) {
-			throw new IOException("JSON string could not be converted.");
+			throw new IOException("JSON string of file " + filename + " could not be converted.");
 		}
 
-		this.day = info.day;
-		this.month = info.month;
-		this.year = info.year;
-		this.name = info.name;
-		this.filename = info.filename;
-		this.secret = info.secret;
-		this.description = info.description;
-		this.instagram = info.instagram;
-		this.twitter = info.twitter;
-		this.tags = info.tags;
-		this.category = info.category;
-		
-		// TODO auch noch das Bild an sich speichern
-	}
-	
-	/**
-	 * 
-	 * @param queryResult
-	 * @param database
-	 */
-	public PictureInformation(ResultSet queryResult, Connection database) {
 		try {
-			LocalDate date = LocalDate.parse(queryResult.getString("date"), formatter);
-			this.day = date.getDayOfMonth();
-			this.month = date.getMonthValue();
-			this.year = date.getYear();
-			
-			this.filename = queryResult.getString("filename");
-			this.name = queryResult.getString("name");
-			this.description = queryResult.getString("explanation");
-			
-			this.secret = queryResult.getBoolean("kept_secret");
-			this.instagram = queryResult.getBoolean("insta_posted");
-			this.twitter = queryResult.getBoolean("twitter_posted");
-			
-			this.category = queryResult.getString("category");
-			
-			String tagsQuery = "SELECT tag_name FROM db_synchro.tags_pics WHERE pic_filename = '"
-					+ getFileName() + "';";
-			ResultSet tagQueryRes = database.prepareStatement(tagsQuery).executeQuery();
-			ArrayList<String> tags = new ArrayList<String>();
-			while (tagQueryRes.next()) {
-				tags.add(tagQueryRes.getString("tag_name"));
-			}
-
-			this.tags = Arrays.copyOf(tags.toArray(), tags.toArray().length, String[].class);
-				
-		} catch (SQLException e) {
-			Logger.log("Konnte nicht retrieven: " + e.getMessage());
+			this.day = info.day;
+			this.month = info.month;
+			this.year = info.year;
+			this.name = info.name;
+			this.filename = info.filename;
+			this.secret = info.secret;
+			this.description = info.description;
+			this.instagram = info.instagram;
+			this.twitter = info.twitter;
+			this.tags = info.tags;
+			this.category = info.category;
+		} catch (Exception e) {
+			throw new IOException("A value in " + filename + " has the wrong type or is not used.");
 		}
 	}
 	
 	/**
-	 * 
-	 * @param filename
-	 * @param client
-	 * @throws IOException
-	 * @throws DbxException
+	 * Creates object using the information from the query.
+	 * @param queryResult with the cursor on the entry with the information you want to create this object with.
+	 * @param database Connection to have access to the MySQL database.
+	 * @throws SQLException if a column cannot be found for the entry the cursor points to.
+	 */
+	public PictureInformation(ResultSet queryResult, Connection database) throws SQLException {
+		LocalDate date = LocalDate.parse(queryResult.getString("date"), FORMATTER);
+		this.day = date.getDayOfMonth();
+		this.month = date.getMonthValue();
+		this.year = date.getYear();
+			
+		this.filename = queryResult.getString("filename");
+		this.name = queryResult.getString("name");
+		this.description = queryResult.getString("explanation");
+			
+		this.secret = queryResult.getBoolean("kept_secret");
+		this.instagram = queryResult.getBoolean("insta_posted");
+		this.twitter = queryResult.getBoolean("twitter_posted");
+			
+		this.category = queryResult.getString("category");
+		
+		// Several updates to add the tags to tables associated with this image.
+		String tagsQuery = "SELECT tag_name FROM db_synchro.tags_pics WHERE pic_filename = '"
+			+ getFileName() + "';";
+		ResultSet tagQueryRes = database.prepareStatement(tagsQuery).executeQuery();
+		ArrayList<String> tags = new ArrayList<String>();
+		while (tagQueryRes.next()) {
+			tags.add(tagQueryRes.getString("tag_name"));
+		}
+
+		this.tags = Arrays.copyOf(tags.toArray(), tags.toArray().length, String[].class);
+	}
+	
+	/**
+	 * Stores the image in the local directory PIC_STORAGE_LOCAL.
+	 * @param filename of the JPG/PNG/GIF to be stored in a local directory.
+	 * @param client with information to connect to the DropBox.
+	 * @throws IOException if there are problems handling the image locally.
+	 * @throws DbxException if the image cannot be found in the DropBox.
 	 */
 	private void savePic(DbxClientV2 client) throws IOException, DbxException {
 		// If the necessary directory does not exist, then create it.
@@ -129,44 +126,36 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		} 
 		
 		// Does picture with this name already exist? If not, create the file.
-		File picToBeStored = new File(PIC_FOLDER_LOCAL.toAbsolutePath().toString() + "/" + getFileName());
-						
+		File picToBeStored = new File(PIC_FOLDER_LOCAL.toAbsolutePath().toString() + "/" + getFileName());						
 		if (!picToBeStored.isFile()) {
-			try {
-				picToBeStored.setWritable(true);
-				picToBeStored.createNewFile();
-			} catch (IOException e) {
-				Logger.log("Konnte file " + picToBeStored.getName() + " konnte nicht erstellt.");
-				e.printStackTrace();
-			}
-		} else Logger.log("File " + picToBeStored.getName() + " existiert bereits.");
-				
+			picToBeStored.setWritable(true);
+			picToBeStored.createNewFile();
+		} else {
+			Logger.log("File " + picToBeStored.getName() + " already exists");
+		}				
 		
-		// output file for download --> storage location on local system to download file
+		// Read the image from the DropBox. If it's not there, throw Exception and let main decide what to do.
 		BufferedImage bufferedImage = null;
-		bufferedImage = ImageIO.read(
-           	client.files()
-           		.download(PIC_STORAGE_DBX + this.getFileName())
-           		.getInputStream()
-           );            	
-		// Logger.log(bufferedImage.getWidth());
-		// Logger.log(bufferedImage.getHeight());	            
-		// Get extension of the file first:
+		try {
+			bufferedImage = ImageIO.read(
+				client.files()
+					.download(PIC_STORAGE_DBX + getFileName())
+		           	.getInputStream()
+			);
+		} catch (Exception e) {
+			throw new DbxException("Could not download " + getFileName() + " from the Dropbox.");
+		}
+		           	
+		// Download seemingly successful. Write it to the local specified directory (PIC_FOLDER_LOCAL).
 		String imgName = picToBeStored.getName();
 		int extensionStartIndex = imgName.lastIndexOf(".");
 		String extension = imgName.substring(extensionStartIndex + 1);
-                 
-		// Write the picture into local directory.
 		ImageIO.write(bufferedImage, extension, picToBeStored);
 	}
 	
-	public void print() {
-		System.out.println("Date: " + String.valueOf(day) + "." + String.valueOf(month) + "." + String.valueOf(year));
-		System.out.println("Names: " + name + ", " + filename);
-		System.out.println(description + "\n");
-	}
-	
-	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException { 
+
+	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {
+		// Store basic information with this in the main table.
 		String sqlString = "INSERT INTO db_synchro.pic_info VALUES ("
 			+ "'" + getFileName() + "'," 
 			+ "'" + getName() + "'," 
@@ -176,7 +165,9 @@ public class PictureInformation extends Information implements DataBaseStorable 
 			+ "b'" + (postedToTwitter() ? 1 : 0) + "',"
 			+ "b'" + (postedToInsta() ? 1 : 0) + "'," 
 			+ "'" + getCategory() + "');";
+		database.prepareStatement(sqlString).executeUpdate();
 		
+		// Store the tags in separate table.
 		for (var tag : this.tags) {
 			String newTagSql = "INSERT INTO db_synchro.tags_pics VALUES ("
 				+ "'" + tag + "',"
@@ -189,66 +180,32 @@ public class PictureInformation extends Information implements DataBaseStorable 
 			}			
 		}
 		
+		// Now download and store the associated image. If it does not work, delete information again.
 		try {
 			savePic(client);
 		} catch (Exception e) {
+			// Information not valid because there is no image associated with it.
+			deleteFromDataBase(database); 
 			throw new SQLException("Could not find any picture with filename " + getFileName() + ". Information was not inserted into database.");
 		}
-		// Not in finally because information is not supposed to be inserted into database.
-		database.prepareStatement(sqlString).executeUpdate();
 	}
+	
 	
 	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException {
 		deleteFromDataBase(database);
 		storeInDataBase(database, client);
 	}
 	
+	
 	public void deleteFromDataBase(Connection database) throws SQLException {
+		// First, delete main information from picture table, then the tags.
 		String sqlString = "DELETE FROM db_synchro.pic_info WHERE filename='" + getFileName() + "';";
 		database.prepareStatement(sqlString).executeUpdate();
 		String sqlTags = "DELETE FROM db_synchro.tags_pics WHERE "
 			+ "pic_filename = '" + getFileName() + "';";
 		database.prepareStatement(sqlTags).executeUpdate();
 	}
-
-	public String getFileName() {
-		return filename;
-	}
 	
-	public String getName() {
-		return name;
-	}
-	
-	public String getDateStr() {
-		String dayStr = String.valueOf(day);
-		String monthStr = String.valueOf(month);
-		String yearStr = String.valueOf(year);
-		return yearStr + "-" + monthStr + "-" + dayStr;
-	}
-	
-	public String getDescription() {
-		return description;
-	}
-	
-	public boolean isSecret() {
-		return secret;
-	}
-	
-	public boolean postedToTwitter() {
-		return twitter;
-	}
-	
-	public boolean postedToInsta() {
-		return instagram;
-	}
-	
-	public String getCategory() {
-		return category;
-	}
-	
-	public ArrayList<String> getTags() {
-		return new ArrayList<String>(Arrays.asList(tags));
-	}
 	
 	public DataChangeMarker containsSameData(DataBaseStorable storable) {
 		PictureInformation compareInfo;
@@ -258,19 +215,21 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		} catch (Exception e) {
 			return DataChangeMarker.DIFFERENT_TYPE;
 		}
-		
+		// If both tag lists do not have same length, they cannot be the same.
 		var compareTags = compareInfo.getTags();
 		boolean sameTags = tags.length == compareTags.size();
-
+		
+		// Comparison tag by tag if they are assumed to be the same until here.
 		if (sameTags) {
 			for (var tag : tags) {
 				if (!compareTags.contains(tag)) {
 					sameTags = false;
 					break;
-				} // if
-			} // for
-		} // if
+				}
+			}
+		}
 		
+		// If they have the same primary key, they are the same file. Did any other property change?
 		if (getFileName().equals(compareInfo.getFileName())) {
 			return getName().equals(compareInfo.getName())
 				&& getDateStr().equals(compareInfo.getDateStr())
@@ -281,7 +240,43 @@ public class PictureInformation extends Information implements DataBaseStorable 
 				&& getCategory().equals(compareInfo.getCategory())
 				&& sameTags
 				? DataChangeMarker.SAME_FILE_KEPT_SAME : DataChangeMarker.SAME_FILE_CHANGED;
-		} else return DataChangeMarker.DIFFERENT_FILE;
+		} else {
+			// If they do not have the same primary key, it was another file all along.
+			return DataChangeMarker.DIFFERENT_FILE;
+		}
 	}
 	
+	// Remaining getters, setters and printing methods follow.
+	
+	public void print() {
+		System.out.println("Date: " + String.valueOf(day) + "." + String.valueOf(month) + "." + String.valueOf(year));
+		System.out.println("Names: " + name + ", " + filename);
+		System.out.println(description + "\n");
+	}
+	
+	public String getFileName() { return filename; }	
+	
+	public String getName() { return name; }	
+	
+	public String getDateStr() {
+		String dayStr = String.valueOf(day);
+		String monthStr = String.valueOf(month);
+		String yearStr = String.valueOf(year);
+		return yearStr + "-" + monthStr + "-" + dayStr;
+	}	
+	
+	public String getDescription() { return description; }	
+	
+	public boolean isSecret() { return secret; }	
+	
+	public boolean postedToTwitter() { return twitter; }
+		
+	public boolean postedToInsta() { return instagram; }
+		
+	public String getCategory() { return category; }
+		
+	public ArrayList<String> getTags() {
+		return new ArrayList<String>(Arrays.asList(tags));
+	}	
+		
 }
