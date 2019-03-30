@@ -154,7 +154,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	}
 	
 
-	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException {
+	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException, DbxException {
 		// Store basic information with this in the main table.
 		String sqlString = "INSERT INTO db_synchro.pic_info VALUES ("
 			+ "'" + getFileName() + "'," 
@@ -186,12 +186,12 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		} catch (Exception e) {
 			// Information not valid because there is no image associated with it.
 			deleteFromDataBase(database); 
-			throw new SQLException("Could not find any picture with filename " + getFileName() + ". Information was not inserted into database.");
+			throw new DbxException("Could not find any image with filename " + getFileName() + ". Information was not inserted into database.");
 		}
 	}
 	
 	
-	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException {
+	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException, DbxException {
 		deleteFromDataBase(database);
 		storeInDataBase(database, client);
 	}

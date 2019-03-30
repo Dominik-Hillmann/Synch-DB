@@ -1,6 +1,7 @@
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
 
 public interface DataBaseStorable {
@@ -11,7 +12,7 @@ public interface DataBaseStorable {
 	 * @param client with information to connect to the DropBox.
 	 * @throws SQLException if there is a problem with the query caused by the values of this object.
 	 */
-	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException;
+	public void storeInDataBase(Connection database, DbxClientV2 client) throws SQLException, DbxException;
 	
 	/**
 	 * Updates all the information about this object in the database.
@@ -19,7 +20,7 @@ public interface DataBaseStorable {
 	 * @param client with information to connect to the DropBox.
 	 * @throws SQLException if there is a problem with the query caused by the values of this object.
 	 */
-	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException;
+	public void updateDataBase(Connection database, DbxClientV2 client) throws SQLException, DbxException;
 	
 	/**
 	 * Deletes this information from its main table and all associated tables like tags, categories, etc.

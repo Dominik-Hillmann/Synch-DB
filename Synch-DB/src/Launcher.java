@@ -1,36 +1,15 @@
-import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
 
-import javax.imageio.ImageIO;
-
-import com.dropbox.core.DbxDownloader;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.v2.DbxClientV2;
-import com.dropbox.core.v2.files.FileMetadata;
-import com.dropbox.core.v2.files.ListFolderResult;
-import com.dropbox.core.v2.files.Metadata;
-import com.dropbox.core.v2.users.FullAccount;
-import com.google.gson.Gson;
-
 
 public class Launcher {
 	
@@ -44,22 +23,24 @@ public class Launcher {
 	private static final String PIC_STORAGE_DBX = "/img/";
 	
 	
-	public static void main(String[] args) throws Exception {
-		Connection dbc;
+	public static void main(String[] args) {
+		Connection dbc = null;
 		try {
 			dbc = getConnection();
 		} catch (SQLException e) {
+			Logger.log("Could not connect to the database.");
+			Logger.log(e.getMessage());
 			System.exit(0);
 		}
 		createDatabase(dbc);
-		DbxRequestConfig config = DbxRequestConfig.newBuilder("Synch-DB").build();
-		DbxClientV2 client = new DbxClientV2(config, TOKEN);
-		// Groupings of parameters of how to contact the Dropbox API.
-        
 		
-		// ############
-		// ### PICS ###
-		// ############
+		// Groupings of parameters of how to contact the Dropbox API.
+		DbxRequestConfig config = DbxRequestConfig.newBuilder("Synch-DB").build();
+		DbxClientV2 client = new DbxClientV2(config, TOKEN);        
+		
+		/* ############
+		   ### PICS ###
+		   ############ */
 		
 		ArrayList<PictureInformation> picFilesDbx = getPicListDbx(PIC_DIR, client);		
 		ArrayList<PictureInformation> picFilesSql = getPicListSql("pic_info", dbc);		
@@ -104,9 +85,9 @@ public class Launcher {
 		}
 		
 		
-		// #############
-		// ### USERS ###
-		// #############
+		/* #############
+		   ### USERS ###
+		   ############# */
 		
 		ArrayList<UserInformation> userFilesDbx = getUserListDbx(USER_DIR, client);				
 		ArrayList<UserInformation> userFilesSql = getUserListSql(dbc);
@@ -125,7 +106,6 @@ public class Launcher {
 			} else if (markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
 				userFileDbx.updateDataBase(dbc, client);
 			} else if (markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)) {
-				Logger.log("skipped");
 				continue;
 			} else {
 				for (var marker : markers) Logger.log(marker.toString());
@@ -204,6 +184,11 @@ public class Launcher {
 		Logger.appendToLogFile();
 	}	
 	
+	/**
+	 * Connects to the MySQL database containing db_synchro.
+	 * @return the database connection.
+	 * @throws SQLException if the connection can somehow not be established.
+	 */	
 	public static Connection getConnection() throws SQLException {		
 		final String driverName = "com.mysql.jdbc.Driver";
 		final String dataBaseUrl = "jdbc:mysql://localhost:3306/";//db_synchro";
@@ -224,29 +209,46 @@ public class Launcher {
 		return conn;
 	}
 	
+	/**
+	 * List of all names of files in a DropBox directory.
+	 * @param dbxDir Where the JSON files are to be found in the DropBox relative to Apps folder.
+	 * @param client To connect to DropBox.
+	 * @return A list of the names of the JSON files in the particular directory.
+	 * @throws DbxException if the directory could not be found or unexpected files occur.
+	 */
 	private static ArrayList<String> getNamesListDbx(String dbxDir, DbxClientV2 client) throws DbxException {
 		ArrayList<String> fileNames = new ArrayList<String>();
-		//try {
-			client.files()
-				.listFolder(dbxDir)
-				.getEntries()
-				.forEach(file -> fileNames.add(file.getName()));					
-		/*} catch (DbxException e) {
-			Logger.log("Did not find directory " + dbxDir + " in the DBX.");
-		}*/
 		
+		client.files()
+			.listFolder(dbxDir)
+			.getEntries()
+			.forEach(file -> fileNames.add(file.getName()));					
+				
 		return fileNames;
 	}
 	
-	private static ArrayList<PictureInformation> getPicListDbx(String dbxDir, DbxClientV2 client) throws DbxException {
-		var picFilesDbx = new ArrayList<PictureInformation>();
-		var picFileNames = getNamesListDbx(dbxDir, client); 
+	/**
+	 * List of all the image information present in the DropBox.
+	 * @param dbxDir Where the JSON files are to be found in the DropBox relative to Apps folder.
+	 * @param client To connect to DropBox.
+	 * @return A list of the information about images present in the DropBox.
+	 */
+	private static ArrayList<PictureInformation> getPicListDbx(String dbxDir, DbxClientV2 client) {
+		ArrayList<PictureInformation> picFilesDbx = new ArrayList<PictureInformation>();
+		ArrayList<String> picFileNames = new ArrayList<String>();
+		try {
+			picFileNames = getNamesListDbx(dbxDir, client); 
+		} catch (DbxException e) {
+			Logger.log("Problem with retrieving names for images. Return empty list of images.");
+			Logger.log(e.getMessage());
+			return picFilesDbx;
+		}				
 		
 		for (var name : picFileNames) {
 			try {
 				picFilesDbx.add(new PictureInformation(name, client));
 			} catch (DbxException | IOException e) {
-				Logger.log("Could not download file named " + name + ".");
+				Logger.log("Could not download file or create stream for file named " + name + ".");
 				continue; // Try the next one.
 			} 
 		}
@@ -254,6 +256,12 @@ public class Launcher {
 		return picFilesDbx;
 	}
 	
+	/**
+	 * List of all PictureInformation present in the database.
+	 * @param picTableName
+	 * @param database Connection to MySQL database.
+	 * @return A list of the information about images present in the database.
+	 */
 	private static ArrayList<PictureInformation> getPicListSql(String picTableName, Connection database) {
 		ArrayList<PictureInformation> picFilesSql = new ArrayList<PictureInformation>();
 		ResultSet resPicQuery = null;		
@@ -266,34 +274,57 @@ public class Launcher {
 			resPicQuery = picQuery.executeQuery();
 		} catch (SQLException e) {
 			Logger.log(
-				"Die Query für die Bildinformationen aus " 
+				"The query for the query of " 
 				+ picTableName 
-				+ " konnte nicht ausgeführt werden: " 
+				+ " could not be finished: " 
 				+ e.getMessage()
+				+ " Returning empty list."
 			);
+			return new ArrayList<PictureInformation>();
 		}
 		
 		try {
 			while (resPicQuery.next()) {
-				picFilesSql.add(new PictureInformation(resPicQuery, database));
+				try {
+					picFilesSql.add(new PictureInformation(resPicQuery, database));
+				} catch (SQLException e) {
+					Logger.log("Creating an PictureInformation object from this entry failed. Trying next one.");
+					Logger.log(e.getMessage());
+					continue;
+				}
 			}
-		} catch (Exception e) {
-			Logger.log("Konnte diesen Wert nicht finden: " + e.getMessage());
+		} catch (SQLException e) {
+			Logger.log("Could not find next PictureInformation entry. Return all objects added until here.");
+			Logger.log(e.getMessage());
+			return picFilesSql;
 		}
 		
 		return picFilesSql;
 	}
 	
-	private static ArrayList<UserInformation> getUserListDbx(String dbxDir, DbxClientV2 client) throws DbxException {
-		ArrayList<UserInformation> userFilesDbx = new ArrayList<UserInformation>();
-		ArrayList<String> userFileNames = getNamesListDbx(dbxDir, client);
+	/**
+	 * Gives you a list of all of the user information present in the DropBox.
+	 * @param dbxDir Directory of where JSON files with user information are to be found in the DropBox.
+	 * @param client To connect to the DropBox.
+	 * @return A list of all user information in the DropBox.
+	 */
+	private static ArrayList<UserInformation> getUserListDbx(String dbxDir, DbxClientV2 client) {
+		ArrayList<UserInformation> userFilesDbx = new ArrayList<UserInformation>();		
+		ArrayList<String> userFileNames = new ArrayList<String>();
+		try {
+			userFileNames = getNamesListDbx(dbxDir, client); 
+		} catch (DbxException e) {
+			Logger.log("Problem with retrieving names for users. Return empty list of users.");
+			Logger.log(e.getMessage());
+			return userFilesDbx;
+		}
 		
 		for (var name : userFileNames) {
 			try {
 				userFilesDbx.add(new UserInformation(name, client));
 			} catch (DbxException | IOException e) {
 				Logger.log("Could not download file named " + name + ".");
-				e.printStackTrace();
+				Logger.log(e.getMessage());
 				continue; // Try the next one.
 			} 
 		}
@@ -301,6 +332,11 @@ public class Launcher {
 		return userFilesDbx;
 	}
 	
+	/**
+	 * Creates a list of all the user information in the database.
+	 * @param database  Connection to MySQL database.
+	 * @return A list of all information about users in the database.
+	 */
 	private static ArrayList<UserInformation> getUserListSql(Connection database) {
 		ArrayList<UserInformation> userFilesSql = new ArrayList<UserInformation>();
 		ResultSet resUserQuery = null;		
@@ -318,17 +354,30 @@ public class Launcher {
 		return userFilesSql;
 	}
 	
-	private static ArrayList<WritingInformation> getWritListDbx(String dbxDir, DbxClientV2 client) throws DbxException {
-		// Writings
-		var writFilesDbx = new ArrayList<WritingInformation>();
-		var writFileNames = getNamesListDbx(dbxDir, client);
+	/**
+	 * Creates list of all writing information in the DropBox.
+	 * @param dbxDir Directory of DropBox where the JSON files with necessary information are to be found.
+	 * @param client to access the DropBox.
+	 * @return A list of all writings present in the DropBox.
+	 */
+	private static ArrayList<WritingInformation> getWritListDbx(String dbxDir, DbxClientV2 client) {
+		ArrayList<WritingInformation> writFilesDbx = new ArrayList<WritingInformation>();
+		ArrayList<String> writFileNames = new ArrayList<String>();
+		
+		try {
+			writFileNames = getNamesListDbx(dbxDir, client); 
+		} catch (DbxException e) {
+			Logger.log("Problem with retrieving names for writings. Return empty list of writings.");
+			Logger.log(e.getMessage());
+			return writFilesDbx;
+		}
 		
 		for (var name : writFileNames) {
 			try {
 				writFilesDbx.add(new WritingInformation(name, client));
 			} catch (DbxException | IOException e) {
 				Logger.log("Could not download file named " + name + ".");
-				e.printStackTrace();
+				Logger.log(e.getMessage());
 				continue; // Try the next one.
 			} 
 		}
@@ -336,6 +385,11 @@ public class Launcher {
 		return writFilesDbx;
 	}
 	
+	/**
+	 * Queries the database for all available writings and returns a list of them.
+	 * @param database  Connection to MySQL database.
+	 * @return The list of all writing information present in the database.
+	 */
 	private static ArrayList<WritingInformation> getWritListSql(Connection database) {
 		ArrayList<WritingInformation> writFilesSql = new ArrayList<WritingInformation>();
 		ResultSet resWritQuery = null;		
@@ -349,14 +403,24 @@ public class Launcher {
 				writFilesSql.add(new WritingInformation(resWritQuery, database));
 			}
 		} catch (SQLException e) {
-			Logger.log("Die Query für die Nutzerinformationen konnte nicht ausgeführt werden: " + e.getMessage());
+			Logger.log("The query for user information could not be completed: " + e.getMessage());
+			Logger.log("Returnig empty writings list.");
+			return new ArrayList<WritingInformation>();
 		}	
 		
 		return writFilesSql;
 	}
 	
+	/**
+	 * If the program is run for the first time, it will create the necessary database and tables.
+	 * @param database Connection to MySQL database.
+	 */
 	private static void createDatabase(Connection database) {
 		try {
+			if (database == null) {
+				throw new SQLException();
+			}
+			
 			PreparedStatement dbCreation = database.prepareStatement("CREATE DATABASE IF NOT EXISTS db_synchro;");
 			dbCreation.executeUpdate();
 			
@@ -433,13 +497,16 @@ public class Launcher {
 			);
 			tags_writsCreation.executeUpdate();
 			
-			Logger.log("Erfolg in DB Creation");
+			Logger.log("Successful database creation...");
+			
 		} catch (SQLException e) {
-			Logger.log("Konnte Datenbank nicht erstellen.");
-		} // try/catch
-	} // createDatabase
+			Logger.log("Could not create database.");
+			Logger.log(e.getMessage());
+			System.exit(0);
+		}
+	}
 
-} // Launcher
+} 
 
 
 /**
