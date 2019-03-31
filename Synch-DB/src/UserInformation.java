@@ -111,6 +111,8 @@ public class UserInformation extends Information implements DataBaseStorable {
 		} 
 		
 		database.prepareStatement(sqlString).executeUpdate();
+		
+		Logger.log("Stored UserInformation about " + getUserName() + " in the database.");
 	}
 
 	
@@ -128,6 +130,8 @@ public class UserInformation extends Information implements DataBaseStorable {
 		database.prepareStatement(sqlString).executeUpdate();
 		sqlString = "DELETE FROM db_synchro.user_writs WHERE user_name='" + getUserName() + "';";
 		database.prepareStatement(sqlString).executeUpdate();
+		
+		Logger.log("Deleted UserInformation about " + getUserName() + " from database.");
 	}
 	
 	

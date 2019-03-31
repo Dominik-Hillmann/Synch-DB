@@ -117,6 +117,8 @@ public class WritingInformation extends Information implements DataBaseStorable 
 				continue;
 			}		
 		}
+		
+		Logger.log("Stored WritingInformation " + getName() + " in database.");
 	}
 
 	
@@ -134,6 +136,8 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		String sqlTags = "DELETE FROM db_synchro.tags_writs WHERE "
 			+ "writ_name = '" + getName() + "';";
 		database.prepareStatement(sqlTags).executeUpdate();
+		
+		Logger.log("Deleted WritingInformation " + getName() + " from database.");
 	}
 	
 	public DataChangeMarker containsSameData(DataBaseStorable storable) {

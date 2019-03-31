@@ -188,6 +188,8 @@ public class PictureInformation extends Information implements DataBaseStorable 
 			deleteFromDataBase(database); 
 			throw new DbxException("Could not find any image with filename " + getFileName() + ". Information was not inserted into database.");
 		}
+		
+		Logger.log("Stored PictureInformation of " + getName() + " in the database and added image " + getFileName() + ".");
 	}
 	
 	
@@ -204,6 +206,8 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		String sqlTags = "DELETE FROM db_synchro.tags_pics WHERE "
 			+ "pic_filename = '" + getFileName() + "';";
 		database.prepareStatement(sqlTags).executeUpdate();
+		
+		Logger.log("Deleted information about PictureInformation " + getName() + " from the database.");
 	}
 	
 	

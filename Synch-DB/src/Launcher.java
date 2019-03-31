@@ -17,13 +17,11 @@ public class Launcher {
 	
 	private static final String USER_DIR = "/user-info/";
 	private static final String PIC_DIR = "/pic-info/";
-	private static final String WRIT_DIR = "/writing-info/";
-	
-	private static final String PIC_STORAGE_LOCAL = "/home/dominik/DB-Synch-imgs/";
-	private static final String PIC_STORAGE_DBX = "/img/";
-	
+	private static final String WRIT_DIR = "/writing-info/";	
 	
 	public static void main(String[] args) {
+		Logger.startLogging();
+		
 		Connection dbc = null;
 		try {
 			dbc = getConnection();
@@ -34,7 +32,7 @@ public class Launcher {
 		}
 		createDatabase(dbc);
 		
-		// Groupings of parameters of how to contact the Dropbox API.
+		// Groupings of parameters of how to contact the DropBox API.
 		DbxRequestConfig config = DbxRequestConfig.newBuilder("Synch-DB").build();
 		DbxClientV2 client = new DbxClientV2(config, TOKEN);        
 		
@@ -47,21 +45,45 @@ public class Launcher {
 		
 		for (var picFileDbx : picFilesDbx) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
-			
+			// Record each comparison.
 			for (var picFileSql : picFilesSql) {
 				markers.add(picFileDbx.containsSameData(picFileSql));
 			}
 						
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME) 
-				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {				
-				picFileDbx.storeInDataBase(dbc, client);				
-			} else if (markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {				
-				picFileDbx.updateDataBase(dbc, client);				
-			} else if (markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)) {				
-				continue;				
-			} else {				
+				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				// Any problems related to downloading associated image or storing information? Try next one.
+				try {
+					picFileDbx.storeInDataBase(dbc, client);
+				} catch (SQLException e) {
+					Logger.log("Could not store information for PictureInformation " + picFileDbx.getName() + " in database.");
+					continue;
+				} catch (DbxException e) {
+					Logger.log("Cannot download image " + picFileDbx.getFileName() + " for " + picFileDbx.getName() + ".");
+					continue;
+				}
+				
+			} else if (markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
+				// Any problems related to downloading associated image or storing information? Try next one.
+				try {
+					picFileDbx.updateDataBase(dbc, client);
+				} catch (SQLException e) {
+					Logger.log("Could not store or delete information for PictureInformation " + picFileDbx.getName() + " in database.");
+					continue;
+				} catch (DbxException e) {
+					Logger.log("Cannot download image " + picFileDbx.getFileName() + " for " + picFileDbx.getName() + ".");
+					continue;
+				}
+				
+			} else if (markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)) {		
+				// Do nothing if it contains exactly the same data.
+				continue;	
+				
+			} else {	
+				
+				Logger.log("Did not this marker structure when comparing PictureInformations:");
 				for (var marker : markers) Logger.log(marker.toString());
-				throw new Exception("Did not anticipate this marker structure");				
+				
 			}
 		}
 		
@@ -79,8 +101,12 @@ public class Launcher {
 			
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)
 				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
-				picFileSql.deleteFromDataBase(dbc);
-				Logger.log("Deleted " + picFileSql.getFileName() + " from database.");
+				try {
+					picFileSql.deleteFromDataBase(dbc);
+				} catch (SQLException e) {
+					Logger.log("Cannot delete PictureInformation " + picFileSql.getName() + " from database.");
+					continue;
+				}
 			}
 		}
 		
@@ -88,6 +114,7 @@ public class Launcher {
 		/* #############
 		   ### USERS ###
 		   ############# */
+		Logger.log("\n");
 		
 		ArrayList<UserInformation> userFilesDbx = getUserListDbx(USER_DIR, client);				
 		ArrayList<UserInformation> userFilesSql = getUserListSql(dbc);
@@ -102,14 +129,31 @@ public class Launcher {
 			
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME) 
 				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
-				userFileDbx.storeInDataBase(dbc, client);
+				
+				try {
+					userFileDbx.storeInDataBase(dbc, client);
+				} catch (SQLException e) {
+					Logger.log("Could not store information for UserInformation " + userFileDbx.getUserName() + " in database.");
+					continue;
+				}
+				
 			} else if (markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
-				userFileDbx.updateDataBase(dbc, client);
+				
+				try {
+					userFileDbx.updateDataBase(dbc, client);
+				} catch (SQLException e) {
+					Logger.log("Could not store or delete information for UserInformation " + userFileDbx.getUserName() + " in database.");
+					continue;
+				}
+				
 			} else if (markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)) {
+				
 				continue;
+				
 			} else {
+				
+				Logger.log("Did not this marker structure when comparing UserInformations:");
 				for (var marker : markers) Logger.log(marker.toString());
-				throw new Exception("Did not anticipate this marker structure");
 			}
 		}
 		
@@ -125,19 +169,25 @@ public class Launcher {
 			
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)
 				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
-				userFileSql.deleteFromDataBase(dbc);
-				Logger.log("Would delete " + userFileSql.getUserName());
+				try {
+					userFileSql.deleteFromDataBase(dbc);
+				} catch (SQLException e) {
+					Logger.log("Cannot delete UserInformation " + userFileSql.getUserName() + " from database.");
+					continue;
+				}
 			}
 		}
 		
 		
-		// ################
-		// ### WRITINGS ###
-		// ################
+		/* ################
+		   ### WRITINGS ###
+		   ################ */
+		Logger.log("\n");
 		
 		ArrayList<WritingInformation> writFilesDbx = getWritListDbx(WRIT_DIR, client);
 		ArrayList<WritingInformation> writFilesSql = getWritListSql(dbc);
 		
+		// Add new entries in the DropBox to the database or change those that have been changed.		
 		for (var writFileDbx : writFilesDbx) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			
@@ -147,18 +197,37 @@ public class Launcher {
 			
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME) 
 				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
-				writFileDbx.storeInDataBase(dbc, client);
+				
+				try {
+					writFileDbx.storeInDataBase(dbc, client);
+				} catch (SQLException e) {
+					Logger.log("Could not store information for WritingInformation " + writFileDbx.getName() + " in database.");
+					continue;
+				} 
+				
 			} else if (markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
-				writFileDbx.updateDataBase(dbc, client);
+				
+				try {
+					writFileDbx.updateDataBase(dbc, client);
+				} catch (SQLException e) {
+					Logger.log("Could not store or delete information for WritingInformation " + writFileDbx.getName() + " in database.");
+					continue;
+				}
+				
 			} else if (markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)) {
-				Logger.log("skipped");
+				
 				continue;
+				
 			} else {
+				
+				Logger.log("Did not this marker structure when comparing WritingInformations:");
 				for (var marker : markers) Logger.log(marker.toString());
-				throw new Exception("Did not anticipate this marker structure");
+				
 			}
 		}
 		
+		// Possibly new entries in database, now check what entries are missing in DropBox that are in the
+		// database and delete those that do not occur in the DropBox.
 		writFilesSql.clear();
 		writFilesSql = getWritListSql(dbc);
 				
@@ -170,10 +239,16 @@ public class Launcher {
 			
 			if (!markers.contains(DataChangeMarker.SAME_FILE_KEPT_SAME)
 				&& !markers.contains(DataChangeMarker.SAME_FILE_CHANGED)) {
-				writFileSql.deleteFromDataBase(dbc);
-				Logger.log("Would delete " + writFileSql.getName());
+				try {
+					writFileSql.deleteFromDataBase(dbc);
+				} catch (SQLException e) {
+					Logger.log("Cannot delete WritingInformation " + writFileSql.getName() + " from database.");
+					continue;
+				}
 			}
 		}
+		
+		// End of program, close database. Append messages to log file in the DropBox.
 			
 		try {
 			dbc.close();
@@ -181,7 +256,7 @@ public class Launcher {
 			Logger.log("Could not close database connection.");
 		}
 		
-		Logger.appendToLogFile();
+		Logger.appendToLogFile(client);
 	}	
 	
 	/**
@@ -508,15 +583,10 @@ public class Launcher {
 
 } 
 
-
 /**
  * TODO
- * Logger
- * Alle möglichen Fehler, z.B. fehlendes Bild zum Namen antizipieren und in Logfile eintragen lassen
+ * gson statische Konstante machen?
  */
-/**
- * IDEEN
- * den Log wieder in die DB laden, um Fehler sehen zu können
- * SQL-Files, um Datenbank wieder auf Raspi herstellen zu können.
- * Fotos auf der Hauptseite über DBX bestimmen.
- */
+
+
+
