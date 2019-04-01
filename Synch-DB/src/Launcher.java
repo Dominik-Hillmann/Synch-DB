@@ -582,11 +582,3 @@ public class Launcher {
 	}
 
 } 
-
-/**
- * TODO
- * gson statische Konstante machen?
- */
-
-
-
