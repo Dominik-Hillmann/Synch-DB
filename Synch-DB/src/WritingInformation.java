@@ -107,7 +107,7 @@ public class WritingInformation extends Information implements DataBaseStorable 
 		database.prepareStatement(sqlString).executeUpdate();
 		
 		// Then store the tags one by one.
-		for (var tag : this.tags) {
+		for (String tag : this.tags) {
 			String newTagSql = "INSERT INTO db_synchro.tags_writs VALUES ("
 				+ "'" + tag + "',"
 				+ "'" + getName() + "');";
@@ -186,7 +186,7 @@ public class WritingInformation extends Information implements DataBaseStorable 
 	public void print() {
 		System.out.println("Date: " + String.valueOf(day) + "." + String.valueOf(month) + "." + String.valueOf(year));
 		System.out.println("Names: " + name);
-		for (var tag : tags) System.out.println(tag);
+		for (String tag : tags) System.out.println(tag);
 		System.out.println("Number of tags: " + String.valueOf(tags.length));
 		System.out.println(text + "\n");
 	} 

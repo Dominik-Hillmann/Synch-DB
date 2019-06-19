@@ -168,7 +168,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		database.prepareStatement(sqlString).executeUpdate();
 		
 		// Store the tags in separate table.
-		for (var tag : this.tags) {
+		for (String tag : this.tags) {
 			String newTagSql = "INSERT INTO db_synchro.tags_pics VALUES ("
 				+ "'" + tag + "',"
 				+ "'" + getFileName() + "');";
@@ -220,12 +220,12 @@ public class PictureInformation extends Information implements DataBaseStorable 
 			return DataChangeMarker.DIFFERENT_TYPE;
 		}
 		// If both tag lists do not have same length, they cannot be the same.
-		var compareTags = compareInfo.getTags();
+		ArrayList<String> compareTags = compareInfo.getTags();
 		boolean sameTags = tags.length == compareTags.size();
 		
 		// Comparison tag by tag if they are assumed to be the same until here.
 		if (sameTags) {
-			for (var tag : tags) {
+			for (String tag : tags) {
 				if (!compareTags.contains(tag)) {
 					sameTags = false;
 					break;

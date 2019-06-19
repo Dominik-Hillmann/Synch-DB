@@ -57,7 +57,7 @@ public class Logger {
 		
 		
 		String logDbx = "";		
-		for (var line : log) {
+		for (String line : log) {
 			logDbx += line + "\n";
 		}
 				

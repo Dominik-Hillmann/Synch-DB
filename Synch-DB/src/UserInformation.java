@@ -96,14 +96,14 @@ public class UserInformation extends Information implements DataBaseStorable {
 			+ "'" + getUserName() + "'," 
 			+ "'" + encrypt(getClearPassword()) + "');";
 		
-		for (var picFileName : this.pics) {
+		for (String picFileName : this.pics) {
 			String additionalPic = "INSERT INTO db_synchro.user_pics VALUES ("
 				+ "'" + getUserName() + "',"
 				+ "'" + picFileName + "');";
 			database.prepareStatement(additionalPic).executeUpdate();
 		}
 		
-		for (var writName : writings) {
+		for (String writName : writings) {
 			String additionalWriting = "INSERT INTO db_synchro.user_writs VALUES ("
 				+ "'" + getUserName() + "',"
 				+ "'" + writName + "');";
@@ -151,13 +151,13 @@ public class UserInformation extends Information implements DataBaseStorable {
 
 		// If still assumed to be the same, then check tag by tag whether they contain the same ones.
 		if (sameResources) {
-			for (var picFileName : pics) {
+			for (String picFileName : pics) {
 				if (!comparePics.contains(picFileName)) {
 					sameResources = false;
 					break;
 				}
 			}
-			for (var writName : writings) {
+			for (String writName : writings) {
 				if (!compareWrits.contains(writName)) {
 					sameResources = false;
 					break;
@@ -201,8 +201,8 @@ public class UserInformation extends Information implements DataBaseStorable {
 	public void print() {
 		System.out.println("Password: " + pw);
 		System.out.println("Username: " + user);
-		for (var pic : this.pics) System.out.println("Ass. pic: " + pic);
-		for (var writ : this.writings) System.out.println("Ass. writ: " + writ);
+		for (String pic : this.pics) System.out.println("Ass. pic: " + pic);
+		for (String writ : this.writings) System.out.println("Ass. writ: " + writ);
 		System.out.println();
 	} 
 	

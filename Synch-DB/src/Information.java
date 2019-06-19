@@ -1,3 +1,4 @@
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +28,27 @@ public abstract class Information {
 			.download(path)
 			.getInputStream();
 		
-		return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+		// return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+		
+		return new String(readFully(in), StandardCharsets.UTF_8);
+	}
+	
+	/**
+	 * Converts InputStean to byte[]. Source: https://stackoverflow.com/questions/2163644/in-java-how-can-i-convert-an-inputstream-into-a-byte-array-byte?noredirect=1&lq=1
+	 * @param input
+	 * @return
+	 * @throws IOException
+	 */
+	private static byte[] readFully(InputStream input) throws IOException
+	{
+	    byte[] buffer = new byte[8192];
+	    int bytesRead;
+	    ByteArrayOutputStream output = new ByteArrayOutputStream();
+	    while ((bytesRead = input.read(buffer)) != -1)
+	    {
+	        output.write(buffer, 0, bytesRead);
+	    }
+	    return output.toByteArray();
 	}
 	
 	/**

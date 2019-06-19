@@ -43,10 +43,10 @@ public class Launcher {
 		ArrayList<PictureInformation> picFilesDbx = getPicListDbx(PIC_DIR, client);		
 		ArrayList<PictureInformation> picFilesSql = getPicListSql("pic_info", dbc);		
 		
-		for (var picFileDbx : picFilesDbx) {
+		for (PictureInformation picFileDbx : picFilesDbx) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			// Record each comparison.
-			for (var picFileSql : picFilesSql) {
+			for (PictureInformation picFileSql : picFilesSql) {
 				markers.add(picFileDbx.containsSameData(picFileSql));
 			}
 						
@@ -82,7 +82,7 @@ public class Launcher {
 			} else {	
 				
 				Logger.log("Did not this marker structure when comparing PictureInformations:");
-				for (var marker : markers) Logger.log(marker.toString());
+				for (DataChangeMarker marker : markers) Logger.log(marker.toString());
 				
 			}
 		}
@@ -92,10 +92,10 @@ public class Launcher {
 		picFilesSql.clear();
 		picFilesSql = getPicListSql("pic_info", dbc);
 				
-		for (var picFileSql : picFilesSql) {
+		for (PictureInformation picFileSql : picFilesSql) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			
-			for (var picFileDbx : picFilesDbx) {
+			for (PictureInformation picFileDbx : picFilesDbx) {
 				markers.add(picFileSql.containsSameData(picFileDbx));
 			}
 			
@@ -120,10 +120,10 @@ public class Launcher {
 		ArrayList<UserInformation> userFilesSql = getUserListSql(dbc);
 						
 		// Vergleich aus Sicht der DBX mit SQL
-		for (var userFileDbx : userFilesDbx) {
+		for (UserInformation userFileDbx : userFilesDbx) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			
-			for (var userFileSql : userFilesSql) {
+			for (UserInformation userFileSql : userFilesSql) {
 				markers.add(userFileDbx.containsSameData(userFileSql));
 			}
 			
@@ -153,7 +153,7 @@ public class Launcher {
 			} else {
 				
 				Logger.log("Did not this marker structure when comparing UserInformations:");
-				for (var marker : markers) Logger.log(marker.toString());
+				for (DataChangeMarker marker : markers) Logger.log(marker.toString());
 			}
 		}
 		
@@ -161,9 +161,9 @@ public class Launcher {
 		userFilesSql.clear();
 		userFilesSql = getUserListSql(dbc);
 				
-		for (var userFileSql : userFilesSql) {
+		for (UserInformation userFileSql : userFilesSql) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
-			for (var userFileDbx : userFilesDbx) {
+			for (UserInformation userFileDbx : userFilesDbx) {
 				markers.add(userFileSql.containsSameData(userFileDbx));
 			}
 			
@@ -188,10 +188,10 @@ public class Launcher {
 		ArrayList<WritingInformation> writFilesSql = getWritListSql(dbc);
 		
 		// Add new entries in the DropBox to the database or change those that have been changed.		
-		for (var writFileDbx : writFilesDbx) {
+		for (WritingInformation writFileDbx : writFilesDbx) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
 			
-			for (var writFileSql : writFilesSql) {
+			for (WritingInformation writFileSql : writFilesSql) {
 				markers.add(writFileDbx.containsSameData(writFileSql));
 			}
 			
@@ -221,7 +221,7 @@ public class Launcher {
 			} else {
 				
 				Logger.log("Did not this marker structure when comparing WritingInformations:");
-				for (var marker : markers) Logger.log(marker.toString());
+				for (DataChangeMarker marker : markers) Logger.log(marker.toString());
 				
 			}
 		}
@@ -231,9 +231,9 @@ public class Launcher {
 		writFilesSql.clear();
 		writFilesSql = getWritListSql(dbc);
 				
-		for (var writFileSql : writFilesSql) {
+		for (WritingInformation writFileSql : writFilesSql) {
 			ArrayList<DataChangeMarker> markers = new ArrayList<DataChangeMarker>();
-			for (var writFileDbx : writFilesDbx) {
+			for (WritingInformation writFileDbx : writFilesDbx) {
 				markers.add(writFileSql.containsSameData(writFileDbx));
 			}
 			
@@ -319,7 +319,7 @@ public class Launcher {
 			return picFilesDbx;
 		}				
 		
-		for (var name : picFileNames) {
+		for (String name : picFileNames) {
 			try {
 				picFilesDbx.add(new PictureInformation(name, client));
 			} catch (DbxException | IOException e) {
@@ -394,7 +394,7 @@ public class Launcher {
 			return userFilesDbx;
 		}
 		
-		for (var name : userFileNames) {
+		for (String name : userFileNames) {
 			try {
 				userFilesDbx.add(new UserInformation(name, client));
 			} catch (DbxException | IOException e) {
@@ -447,7 +447,7 @@ public class Launcher {
 			return writFilesDbx;
 		}
 		
-		for (var name : writFileNames) {
+		for (String name : writFileNames) {
 			try {
 				writFilesDbx.add(new WritingInformation(name, client));
 			} catch (DbxException | IOException e) {
@@ -582,3 +582,7 @@ public class Launcher {
 	}
 
 } 
+/**
+ * Logs besser gestalten, z.B.mit Zeiten für einzelne Operationen.
+ * 
+ */
