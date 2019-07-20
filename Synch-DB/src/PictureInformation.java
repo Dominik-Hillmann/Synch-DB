@@ -34,8 +34,8 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	private String[] tags;
 	private String category;
 	
-	private static final Path PIC_FOLDER_LOCAL = Paths.get("/home/dominik/DB-Synch-imgs/");
-	private static final String PIC_STORAGE_LOCAL = "/home/dominik/DB-Synch-imgs/";
+	private static final Path PIC_FOLDER_LOCAL = Paths.get("/var/www/html/img/content/");
+	private static final String PIC_STORAGE_LOCAL = "/home/pi/DB-Synch-imgs/";
 	private static final String PIC_STORAGE_DBX = "/img/";
 	
 	/**

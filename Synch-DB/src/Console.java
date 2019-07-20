@@ -3,7 +3,7 @@ import java.io.InputStreamReader;
 
 public class Console {
 	
-	private static final String ENC_SCRIPT = "/home/dominik/Desktop/Encrypt.sh";
+	private static final String ENC_SCRIPT = "/home/pi/DB-Synch-imgs/Encrypt.sh";
 	
 	/**
 	 * Returns the hash of its input string, hashed by PHP function password_hash(...).

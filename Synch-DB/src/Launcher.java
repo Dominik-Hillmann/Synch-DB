@@ -496,7 +496,9 @@ public class Launcher {
 				throw new SQLException();
 			}
 			
-			PreparedStatement dbCreation = database.prepareStatement("CREATE DATABASE IF NOT EXISTS db_synchro;");
+			PreparedStatement dbCreation = database.prepareStatement(
+				"CREATE DATABASE IF NOT EXISTS db_synchro;"
+			);
 			dbCreation.executeUpdate();
 			
 			PreparedStatement useDatabase = database.prepareStatement("USE db_synchro;");
