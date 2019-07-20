@@ -108,7 +108,7 @@ public class FrontPics extends Information implements DataBaseStorable {
 		for (String category : CATEGORY_NAMES) {
 			try {
 				
-			} catch (Exception e) {
+			} catch (Exception e) { 
 				
 			}
 		}
