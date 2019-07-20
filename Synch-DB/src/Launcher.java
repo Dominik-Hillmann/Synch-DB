@@ -497,6 +497,8 @@ public class Launcher {
 			}
 			
 			PreparedStatement dbCreation = database.prepareStatement(
+				// DROP DATABASE IF EXISTS <YOUR_DATABASE_NAME>;
+				// CREATE DATABASE <YOUR_DATABAE_NAME> DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 				"CREATE DATABASE IF NOT EXISTS db_synchro;"
 			);
 			dbCreation.executeUpdate();
