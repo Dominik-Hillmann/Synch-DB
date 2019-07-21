@@ -17,7 +17,8 @@ public class Launcher {
 	
 	private static final String USER_DIR = "/user-info/";
 	private static final String PIC_DIR = "/pic-info/";
-	private static final String WRIT_DIR = "/writing-info/";	
+	private static final String WRIT_DIR = "/writing-info/";
+	// private static final String FRONT_PIC_DIR = "/front_pics/";
 	
 	public static void main(String[] args) {
 		Logger.startLogging();
@@ -59,7 +60,7 @@ public class Launcher {
 					Logger.log("Could not store information for PictureInformation " + picFileDbx.getName() + " in database.");
 					continue;
 				} catch (DbxException e) {
-					Logger.log("Cannot download image " + picFileDbx.getFileName() + " for " + picFileDbx.getName() + ".");
+					Logger.log("Cannot download image " + picFileDbx.getFileName() + " for " + picFileDbx.getName() + ". " + e.toString());
 					continue;
 				}
 				
@@ -220,7 +221,7 @@ public class Launcher {
 				
 			} else {
 				
-				Logger.log("Did not this marker structure when comparing WritingInformations:");
+				Logger.log("Did not anticipate this marker structure when comparing WritingInformations:");
 				for (DataChangeMarker marker : markers) Logger.log(marker.toString());
 				
 			}
@@ -247,6 +248,31 @@ public class Launcher {
 				}
 			}
 		}
+		
+		
+		/* ##################
+		   ### FRONT PICS ###
+		   ################## */
+		
+		FrontPics frontPicsDbx = null;
+		FrontPics frontPicsSql = null;
+		
+		try {
+			frontPicsDbx = new FrontPics(client);
+			frontPicsSql = new FrontPics(dbc);
+			
+			DataChangeMarker marker = frontPicsDbx.containsSameData(frontPicsSql);
+			
+			if (marker == DataChangeMarker.SAME_FILE_CHANGED) {
+				frontPicsDbx.updateDataBase(dbc, client);
+			} else if (marker == DataChangeMarker.DIFFERENT_FILE) {
+				Logger.log("Different files for front_pics.");
+			}			
+		} catch (Exception e) {
+			Logger.log("Could not open Dropbox or SQL version of front pics:");
+			Logger.log(e.toString());
+		}
+		
 		
 		// End of program, close database. Append messages to log file in the DropBox.
 			
@@ -486,6 +512,7 @@ public class Launcher {
 		return writFilesSql;
 	}
 	
+		
 	/**
 	 * If the program is run for the first time, it will create the necessary database and tables.
 	 * @param database Connection to MySQL database.

@@ -34,8 +34,8 @@ public class PictureInformation extends Information implements DataBaseStorable 
 	private String[] tags;
 	private String category;
 	
-	private static final Path PIC_FOLDER_LOCAL = Paths.get("/var/www/html/img/content/");
-	private static final String PIC_STORAGE_LOCAL = "/home/pi/DB-Synch-imgs/";
+	private static final Path PIC_FOLDER_LOCAL = Paths.get("/var/www/html/img/content/"); // Paths.get("/var/www/html/img/content/");
+	private static final String PIC_STORAGE_LOCAL = "/var/www/html/img/content/"; // "/home/pi/DB-Synch-imgs/";
 	private static final String PIC_STORAGE_DBX = "/img/";
 	
 	/**
@@ -186,7 +186,7 @@ public class PictureInformation extends Information implements DataBaseStorable 
 		} catch (Exception e) {
 			// Information not valid because there is no image associated with it.
 			deleteFromDataBase(database); 
-			throw new DbxException("Could not find any image with filename " + getFileName() + ". Information was not inserted into database.");
+			throw new DbxException("Could not find any image with filename " + getFileName() + ". Information was not inserted into database." + e.toString());
 		}
 		
 		Logger.log("Stored PictureInformation of " + getName() + " in the database and added image " + getFileName() + ".");

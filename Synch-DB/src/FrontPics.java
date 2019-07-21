@@ -95,7 +95,7 @@ public class FrontPics extends Information implements DataBaseStorable {
 	@Override
 	public void deleteFromDataBase(Connection database) throws SQLException {
 		for (String category : CATEGORY_NAMES) {
-			String sqlString = "DELETE FROM db_synchro.front_pics WHERE filename='" + category + "';";
+			String sqlString = "DELETE FROM db_synchro.front_pics WHERE category_name='" + category + "';";
 			database.prepareStatement(sqlString).executeUpdate();
 
 			Logger.log("Deleted information about front_pic " + category + " from the database.");
@@ -104,20 +104,33 @@ public class FrontPics extends Information implements DataBaseStorable {
 
 	@Override
 	public DataChangeMarker containsSameData(DataBaseStorable storable) {
-		FrontPics others = (FrontPics) storable;
-		for (String category : CATEGORY_NAMES) {
-			try {
-				
-			} catch (Exception e) { 
-				
-			}
+		if (storable == null) {
+			return DataChangeMarker.SAME_FILE_CHANGED;
 		}
+		
+		FrontPics others = null;
+		try {
+			others = (FrontPics) storable;			
+		} catch (Exception e) {
+			return DataChangeMarker.DIFFERENT_TYPE;
+		}
+		
+		boolean allSame = (getGraphPath().equals(others.getGraphPath())) &&
+			(getIlluPath().equals(others.getIlluPath())) &&
+			(getDrawPath().equals(others.getDrawPath())) &&
+			(getWritPath().equals(others.getWritPath())) &&
+			(getPhotoPath().equals(others.getPhotoPath()));
+		
+		return allSame ? DataChangeMarker.SAME_FILE_KEPT_SAME : DataChangeMarker.SAME_FILE_CHANGED;	
 	}
 
 	@Override
 	public void print() {
-		// TODO Auto-generated method stub
-		
+		Logger.log("Printing content of front_pics:");
+		for (String category : CATEGORY_NAMES) {
+			Logger.log(category + " " + getPathOfCategory(category));
+		}
+		Logger.log("\n");
 	}
 	
 	private String getPathOfCategory(String category) {
@@ -131,4 +144,9 @@ public class FrontPics extends Information implements DataBaseStorable {
 		return null;
 	}
 	
+	public String getDrawPath() { return drawings; }
+	public String getGraphPath() { return graphic_design; }
+	public String getIlluPath() { return illustrationen; }
+	public String getWritPath() { return writing; }
+	public String getPhotoPath() { return photography; }	
 }
